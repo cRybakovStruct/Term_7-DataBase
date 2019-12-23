@@ -8,7 +8,6 @@ import pymysql.cursors
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QTableWidget, QTableWidgetItem
 from PyQt5.QtCore import QSize, Qt
 
-import authorization
 from additional_modules import *
 
 
@@ -21,7 +20,7 @@ class MainWindow(QMainWindow):
         QMainWindow.__init__(self)
 
         self.setMinimumSize(QSize(480, 80))
-        self.setWindowTitle("Работа с QTableWidget")
+        self.setWindowTitle("Admin")
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
 
@@ -54,7 +53,7 @@ class MainWindow(QMainWindow):
 
     def getConnection(self):
 
-        dialog = authorization.Authorization(self)
+        dialog = AuthorizationDlg(self)
         if dialog.exec_() == QDialog.Accepted:
             print('Login: %s' % dialog.login.text())
             print('Password: %s' % dialog.passwd.text())
