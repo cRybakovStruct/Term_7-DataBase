@@ -166,26 +166,25 @@ class MainWindow(QMainWindow):
         dialog = AddWorkerDlg(shops_id, self)
         if dialog.exec_() == QDialog.Accepted:
             try:
-                args = (dialog.surname.text(),
-                        dialog.name.text(),
-                        dialog.fathername.text(),
-                        dialog.education.text(),
-                        dialog.town.text(),
-                        dialog.address.text(),
-                        dialog.phonenumber.text(),
-                        dialog.birthday.text(),
-                        dialog.employ_date.text(),
-                        dialog.salary.text(),
-                        dialog.position.text(),
-                        dialog.category.text(),
-                        dialog.unemploy_date.text(),
-                        dialog.shop.currentText())
+                args = (dialog.surname.text() if dialog.surname.text() != "" else None,
+                        dialog.name.text() if dialog.name.text() != "" else None,
+                        dialog.fathername.text() if dialog.fathername.text() != "" else None,
+                        dialog.education.text() if dialog.education.text() != "" else None,
+                        dialog.town.text() if dialog.town.text() != "" else None,
+                        dialog.address.text() if dialog.address.text() != "" else None,
+                        dialog.phonenumber.text() if dialog.phonenumber.text() != "" else None,
+                        dialog.birthday.text() if dialog.birthday.text() != "" else None,
+                        dialog.employ_date.text() if dialog.employ_date.text() != "" else None,
+                        dialog.salary.text() if dialog.salary.text() != "" else None,
+                        dialog.position.text() if dialog.position.text() != "" else None,
+                        dialog.category.text() if dialog.category.text() != "" else None,
+                        dialog.unemploy_date.text() if dialog.unemploy_date.text() != "" else None,
+                        dialog.shop.currentText() if dialog.shop.text() != "" else None)
                 cursor.execute(
                     "CALL INSERT_WORKER(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", args)
-                # TODO: Есть заготовка для триггера, который будет генерировать ошибку в случае некорректных дат
                 self.clearWorkersFilter()
             except Exception as err:
-                print(err)
+                QMessageBox.critical(None, 'Error!', str(err))
 
         else:
             print('Cancelled')
