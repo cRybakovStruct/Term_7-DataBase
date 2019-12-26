@@ -11,10 +11,6 @@ from PyQt5.QtCore import QSize, Qt
 from additional_modules import *
 
 
-class NoneConnectionError(AttributeError):
-    ''''''
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)

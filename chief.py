@@ -6,11 +6,9 @@ from PyQt5 import QtGui, QtWidgets
 import json
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QTableWidget, QTableWidgetItem
 from PyQt5.QtCore import QSize, Qt
+
 from additional_modules import *
-
-
-class NoneConnectionError(AttributeError):
-    ''''''
+from dialogs import *
 
 
 class MainWindow(QMainWindow):
@@ -39,7 +37,7 @@ class MainWindow(QMainWindow):
                                        'height',
                                        'weight',
                                        'power',
-                                       'detail_lenght',
+                                       'detail_length',
                                        'detail_width',
                                        'detail_thickness',
                                        'tools',
@@ -70,14 +68,14 @@ class MainWindow(QMainWindow):
                                       'receipt_date',
                                       'start_date',
                                       'finish_date',
-                                      'responsibile_id',
+                                      'responsible_id',
                                       'equipment_id']
 
         self.fixations_table_headers = ['worker',
                                         'shop']
 
         self.performers_table_headers = ['repair_id',
-                                        'worker_id']
+                                         'worker_id']
 
         self.connection = self.getConnection()
         while not self.connection:
@@ -218,6 +216,7 @@ class MainWindow(QMainWindow):
 
 
 # regopn Machines
+
 
     def createMachinesTab(self):
         machines_widget = QWidget(self)
