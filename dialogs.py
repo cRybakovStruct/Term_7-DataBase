@@ -123,7 +123,8 @@ class AddWorkerDlg(QDialog):
 
         self.layout.addLayout(self.hbox_layout)
 
-    def __createLabel__(self, text, alignment= None):#Qt.AlignVCenter | Qt.AlignRight):
+    # Qt.AlignVCenter | Qt.AlignRight):
+    def __createLabel__(self, text, alignment=None):
         label = QLabel(text)
         label.setFixedSize(150, 20)
         # label.setAlignment(alignment)
@@ -152,7 +153,8 @@ class AddWorkerDlg(QDialog):
         if dialog.exec_() == QDialog.Accepted:
             tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
             self.unemploy_date.setText(str(tmp))
-            
+
+
 class EditWorkerDlg(QDialog):
     def __init__(self, parent=None):
         QDialog.__init__(self, parent)
@@ -229,7 +231,8 @@ class EditWorkerDlg(QDialog):
 
         self.layout.addLayout(self.hbox_layout)
 
-    def __createLabel__(self, text, alignment= None):#Qt.AlignVCenter | Qt.AlignRight):
+    # Qt.AlignVCenter | Qt.AlignRight):
+    def __createLabel__(self, text, alignment=None):
         label = QLabel(text)
         label.setFixedSize(150, 20)
         # label.setAlignment(alignment)
@@ -324,7 +327,8 @@ class AddMachineDlg(QDialog):
 
         self.layout.addLayout(self.hbox_layout)
 
-    def __createLabel__(self, text, alignment=None):#Qt.AlignVCenter | Qt.AlignRight):
+    # Qt.AlignVCenter | Qt.AlignRight):
+    def __createLabel__(self, text, alignment=None):
         label = QLabel(text)
         label.setFixedSize(150, 20)
         # label.setAlignment(alignment)
@@ -336,23 +340,23 @@ class AddMachineDlg(QDialog):
         tmp_layout.addWidget(line_edit)
         self.layout.addLayout(tmp_layout)
 
+
 class YesNoDlg(QDialog):
     def __init__(self, title, message, parent=None):
         QDialog.__init__(self, parent)
         self.setWindowTitle(title)
-        self.layout=QVBoxLayout(self)
+        self.layout = QVBoxLayout(self)
 
         msg = QLabel(message)
         msg.setWordWrap(True)
         self.layout.addWidget(msg)
 
-        self.hbox_layout=QHBoxLayout()
-        self.ok_button=QPushButton('Да',self)
+        self.hbox_layout = QHBoxLayout()
+        self.ok_button = QPushButton('Да', self)
         self.ok_button.clicked.connect(self.accept)
         self.hbox_layout.addWidget(self.ok_button)
-        self.cancel_button=QPushButton('Нет',self)
+        self.cancel_button = QPushButton('Нет', self)
         self.cancel_button.clicked.connect(self.reject)
         self.hbox_layout.addWidget(self.cancel_button)
 
         self.layout.addLayout(self.hbox_layout)
-

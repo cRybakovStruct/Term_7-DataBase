@@ -14,6 +14,7 @@ from classes_for_alchemy_orm import Base, Worker, Fixation
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
@@ -85,7 +86,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(
                 None, "Error", "Wrong authorization parameters")
             self.connection = self.getConnection()
-            
+
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
@@ -145,12 +146,12 @@ class MainWindow(QMainWindow):
         addWorkerBtn.setFixedWidth(75)
         addWorkerBtn.clicked.connect(lambda: self.addWorker())
         controlls.addWidget(addWorkerBtn)
-        
+
         editWorkerBtn = QPushButton('Edit worker', self)
         editWorkerBtn.setFixedWidth(75)
         editWorkerBtn.clicked.connect(lambda: self.editWorker())
         controlls.addWidget(editWorkerBtn)
-        
+
         delWorkerBtn = QPushButton('Delete worker', self)
         delWorkerBtn.setFixedWidth(75)
         delWorkerBtn.clicked.connect(lambda: self.deleteWorker())
@@ -166,7 +167,8 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(filter_group)
         toolbar.addLayout(controlls)
 
-        self.workers_table = createTableFromMYSQLDB(headers=self.workers_table_headers)
+        self.workers_table = createTableFromMYSQLDB(
+            headers=self.workers_table_headers)
         # self.workers_table.itemDoubleClicked.connect(lambda: self.deleteWorker())
 
         self.workers_grid_layout = QGridLayout()
@@ -187,29 +189,29 @@ class MainWindow(QMainWindow):
         if dialog.exec_() == QDialog.Accepted:
             try:
                 new_worker = Worker(dialog.surname.text() if dialog.surname.text() != "" else None,
-                        dialog.name.text() if dialog.name.text() != "" else None,
-                        dialog.fathername.text() if dialog.fathername.text() != "" else None,
-                        dialog.education.text() if dialog.education.text() != "" else None,
-                        dialog.town.text() if dialog.town.text() != "" else None,
-                        dialog.address.text() if dialog.address.text() != "" else None,
-                        dialog.phonenumber.text() if dialog.phonenumber.text() != "" else None,
-                        dialog.birthday.text() if dialog.birthday.text() != "" else None,
-                        dialog.employ_date.text() if dialog.employ_date.text() != "" else None,
-                        dialog.salary.text() if dialog.salary.text() != "" else None,
-                        dialog.position.text() if dialog.position.text() != "" else None,
-                        dialog.category.text() if dialog.category.text() != "" else None,
-                        dialog.unemploy_date.text() if dialog.unemploy_date.text() != "" else None)
-                        # dialog.shop.currentText() if dialog.shop.currentText() != "" else None)
-                self.session.add(new_worker)                
+                                    dialog.name.text() if dialog.name.text() != "" else None,
+                                    dialog.fathername.text() if dialog.fathername.text() != "" else None,
+                                    dialog.education.text() if dialog.education.text() != "" else None,
+                                    dialog.town.text() if dialog.town.text() != "" else None,
+                                    dialog.address.text() if dialog.address.text() != "" else None,
+                                    dialog.phonenumber.text() if dialog.phonenumber.text() != "" else None,
+                                    dialog.birthday.text() if dialog.birthday.text() != "" else None,
+                                    dialog.employ_date.text() if dialog.employ_date.text() != "" else None,
+                                    dialog.salary.text() if dialog.salary.text() != "" else None,
+                                    dialog.position.text() if dialog.position.text() != "" else None,
+                                    dialog.category.text() if dialog.category.text() != "" else None,
+                                    dialog.unemploy_date.text() if dialog.unemploy_date.text() != "" else None)
+                # dialog.shop.currentText() if dialog.shop.currentText() != "" else None)
+                self.session.add(new_worker)
                 self.session.commit()
-                
+
                 if dialog.shop.currentText() != "":
-                    new_fixation = Fixation(new_worker.idworker, dialog.shop.currentText())
+                    new_fixation = Fixation(
+                        new_worker.idworker, dialog.shop.currentText())
                     print(new_fixation)
                     self.session.add(new_fixation)
                     self.session.commit()
-                
-                
+
                 # cursor.execute(
                 #     "CALL INSERT_WORKER(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", args)
                 self.clearWorkersFilter()
@@ -224,7 +226,8 @@ class MainWindow(QMainWindow):
         items = self.workers_table.selectedItems()
         row, res = getRow(items)
         if not res:
-            QMessageBox.critical(None, 'Warning!', 'Please, select cells in single row')
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
             return
         else:
             dialog = EditWorkerDlg(self)
@@ -240,37 +243,52 @@ class MainWindow(QMainWindow):
             dialog.salary.setText(self.workers_table.item(row, 10).text())
             dialog.position.setText(self.workers_table.item(row, 11).text())
             dialog.category.setText(self.workers_table.item(row, 12).text())
-            dialog.unemploy_date.setText(self.workers_table.item(row, 13).text())
+            dialog.unemploy_date.setText(
+                self.workers_table.item(row, 13).text())
             if dialog.exec_() == QDialog.Accepted:
                 try:
-                    editing_worker = self.session.query(Worker).filter_by(idworker=self.workers_table.item(row, 0).text()).first()
-                    editing_worker.surname=dialog.surname.text() if dialog.surname.text() != "" else None
-                    editing_worker.name=dialog.name.text() if dialog.name.text() != "" else None
-                    editing_worker.fathername=dialog.fathername.text() if dialog.fathername.text() != "" else None
-                    editing_worker.education=dialog.education.text() if dialog.education.text() != "" else None
-                    editing_worker.town=dialog.town.text() if dialog.town.text() != "" else None
-                    editing_worker.address=dialog.address.text() if dialog.address.text() != "" else None
-                    editing_worker.phonenumber=dialog.phonenumber.text() if dialog.phonenumber.text() != "" else None
-                    editing_worker.birthday=dialog.birthday.text() if dialog.birthday.text() != "" else None
-                    editing_worker.employ_date= dialog.employ_date.text() if dialog.employ_date.text() != "" else None
-                    editing_worker.salary=dialog.salary.text() if dialog.salary.text() != "" else None
-                    editing_worker.position=dialog.position.text() if dialog.position.text() != "" else None
-                    editing_worker.category= dialog.category.text() if dialog.category.text() != "" else None
-                    editing_worker.unemploy_date=dialog.unemploy_date.text() if dialog.unemploy_date.text() != "" else None
+                    editing_worker = self.session.query(Worker).filter_by(
+                        idworker=self.workers_table.item(row, 0).text()).first()
+                    editing_worker.surname = dialog.surname.text(
+                    ) if dialog.surname.text() != "" else None
+                    editing_worker.name = dialog.name.text() if dialog.name.text() != "" else None
+                    editing_worker.fathername = dialog.fathername.text(
+                    ) if dialog.fathername.text() != "" else None
+                    editing_worker.education = dialog.education.text(
+                    ) if dialog.education.text() != "" else None
+                    editing_worker.town = dialog.town.text() if dialog.town.text() != "" else None
+                    editing_worker.address = dialog.address.text(
+                    ) if dialog.address.text() != "" else None
+                    editing_worker.phonenumber = dialog.phonenumber.text(
+                    ) if dialog.phonenumber.text() != "" else None
+                    editing_worker.birthday = dialog.birthday.text(
+                    ) if dialog.birthday.text() != "" else None
+                    editing_worker.employ_date = dialog.employ_date.text(
+                    ) if dialog.employ_date.text() != "" else None
+                    editing_worker.salary = dialog.salary.text() if dialog.salary.text() != "" else None
+                    editing_worker.position = dialog.position.text(
+                    ) if dialog.position.text() != "" else None
+                    editing_worker.category = dialog.category.text(
+                    ) if dialog.category.text() != "" else None
+                    editing_worker.unemploy_date = dialog.unemploy_date.text(
+                    ) if dialog.unemploy_date.text() != "" else None
                     self.session.commit()
                     self.clearWorkersFilter()
                 except Exception as err:
                     QMessageBox.critical(None, 'Error!', str(err))
-        
+
     def deleteWorker(self):
         items = self.workers_table.selectedItems()
         row, res = getRow(items)
         if not res:
-            QMessageBox.critical(None, 'Warning!', 'Please, select cells in single row')
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
             return
         else:
-            deleting_worker = self.session.query(Worker).filter_by(idworker=self.workers_table.item(row, 0).text()).first()
-            dialog = YesNoDlg('Worker deleting', f'Are you really want to delete worker:\n{deleting_worker}?')
+            deleting_worker = self.session.query(Worker).filter_by(
+                idworker=self.workers_table.item(row, 0).text()).first()
+            dialog = YesNoDlg(
+                'Worker deleting', f'Are you really want to delete worker:\n{deleting_worker}?')
             if dialog.exec_() == QDialog.Accepted:
                 try:
                     self.session.delete(deleting_worker)
@@ -286,7 +304,8 @@ class MainWindow(QMainWindow):
                        (col, self.workersFilterValue.text()))
         data = cursor.fetchall()
         # print(data)
-        self.workers_table = createTableFromMYSQLDB(data, self.workers_table_headers, self)
+        self.workers_table = createTableFromMYSQLDB(
+            data, self.workers_table_headers, self)
         self.workers_table.resizeColumnsToContents()
         self.workers_grid_layout.addWidget(self.workers_table, 1, 0)
         self.workersFilterValue.setText('')
@@ -297,11 +316,12 @@ class MainWindow(QMainWindow):
         cursor.execute("CALL SHOW_ALL_WORKERS()")
         data = cursor.fetchall()
         # print(data)
-        self.workers_table = createTableFromMYSQLDB(data, self.workers_table_headers, self)
+        self.workers_table = createTableFromMYSQLDB(
+            data, self.workers_table_headers, self)
         self.workers_table.resizeColumnsToContents()
         self.workers_grid_layout.addWidget(self.workers_table, 1, 0)
         self.workersFilterValue.setText('')
-        self.workersFilterColumn.setCurrentIndex(0)        
+        self.workersFilterColumn.setCurrentIndex(0)
 
 # endregion
 
@@ -725,8 +745,7 @@ class MainWindow(QMainWindow):
                                              charset='utf8')
                 engine = create_engine(
                     f"mysql://{dialog.login.text()}:{dialog.passwd.text()}@localhost:3306/rmc?charset=utf8", echo=False)
-                
-                
+
                 return (connection, engine)
             except Exception as err:
                 QMessageBox.critical(None, 'Error!', str(err))
@@ -735,6 +754,7 @@ class MainWindow(QMainWindow):
             print('Cancelled')
             dialog.deleteLater()
             raise NoneConnectionError
+
 
 if __name__ == "__main__":
     try:

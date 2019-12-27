@@ -39,17 +39,16 @@ def createTableFromMYSQLDB(table_data=None, headers=None, parent=None):
         table.resizeColumnsToContents()
     finally:
         return table
-    
+
 
 def getRow(items):
     row = None
     for item in items:
         if row == None:
             row = item.row()
-        elif row!=item.row():
+        elif row != item.row():
             return (row, False)
     return (row, True)
-        
 
 
 class NoneConnectionError(AttributeError):

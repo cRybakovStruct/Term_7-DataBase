@@ -40,13 +40,14 @@ class Worker(Base):
 
     def __repr__(self):
         return "<Worker('%s','%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')>" % (self.idworker, self.surname, self.name, self.fathername, self.education, self.town, self.address, self.phonenumber, self.birthday, self.employ_date, self.salary, self.position, self.category, self.unemploy_date)
-    
+
+
 class Fixation(Base):
     __tablename__ = 'fixations'
     # id = Column(Integer, primary_key=True)
     worker = Column(Integer, primary_key=True)
     shop = Column(String, primary_key=True)
-    
+
     def __init__(self, worker, shop):
         self.worker = worker
         self.shop = shop
