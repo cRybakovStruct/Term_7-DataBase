@@ -1,15 +1,14 @@
 import MySQLdb
 
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QSize, Qt, QObject
+from PyQt5.QtCore import QSize, QObject
 from PyQt5 import QtGui, QtWidgets
 import json
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QTableWidget, QTableWidgetItem
-from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtCore import QSize
 
 from additional_modules import *
 from dialogs import *
-
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -860,7 +859,6 @@ class MainWindow(QMainWindow):
             print('Cancelled')
             dialog.deleteLater()
             raise NoneConnectionError
-
 
 if __name__ == "__main__":
     try:

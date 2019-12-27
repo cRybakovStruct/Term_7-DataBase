@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QApplication, QDialog, QGridLayout, QMainWindow, QMessageBox, QTabWidget, QWidget
 from PyQt5.QtCore import QSize
 import sys
-from additional_modules import AuthorizationDlg, NoneConnectionError
+from additional_modules import NoneConnectionError
+from dialogs import AuthorizationDlg
 
 from classes_for_alchemy_orm import Base, Worker
 from sqlalchemy.orm import sessionmaker
