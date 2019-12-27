@@ -22,8 +22,8 @@ class Worker(Base):
     category = Column(Integer)
     unemploy_date = Column(Date)
 
-    def __init__(self, idworker, surname, name, fathername, education, town, address, phonenumber, birthday, employ_date, salary, position, category, unemploy_date):
-        self.idworker = idworker
+    def __init__(self, surname, name, fathername, education, town, address, phonenumber, birthday, employ_date, salary, position, category, unemploy_date):
+        # self.idworker = idworker
         self.surname = surname
         self.name = name
         self.fathername = fathername
@@ -39,4 +39,17 @@ class Worker(Base):
         self.unemploy_date = unemploy_date
 
     def __repr__(self):
-        return "<User('%s','%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')>" % (self.idworker, self.surname, self.name, self.fathername, self.education, self.town, self.address, self.phonenumber, self.birthday, self.employ_date, self.salary, self.position, self.category, self.unemploy_date)
+        return "<Worker('%s','%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')>" % (self.idworker, self.surname, self.name, self.fathername, self.education, self.town, self.address, self.phonenumber, self.birthday, self.employ_date, self.salary, self.position, self.category, self.unemploy_date)
+    
+class Fixation(Base):
+    __tablename__ = 'fixations'
+    # id = Column(Integer, primary_key=True)
+    worker = Column(Integer, primary_key=True)
+    shop = Column(String, primary_key=True)
+    
+    def __init__(self, worker, shop):
+        self.worker = worker
+        self.shop = shop
+
+    def __repr__(self):
+        return "<Fixation('%s','%s')>" % (self.worker, self.shop)

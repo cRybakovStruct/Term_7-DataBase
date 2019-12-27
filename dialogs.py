@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QCalendarWidget, QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
+# from PyQt5 import Qt
 
 
 class GetDateDlg(QDialog):
@@ -122,10 +123,116 @@ class AddWorkerDlg(QDialog):
 
         self.layout.addLayout(self.hbox_layout)
 
-    def __createLabel__(self, text, alignment=Qt.AlignVCenter | Qt.AlignRight):
+    def __createLabel__(self, text, alignment= None):#Qt.AlignVCenter | Qt.AlignRight):
         label = QLabel(text)
         label.setFixedSize(150, 20)
-        label.setAlignment(alignment)
+        # label.setAlignment(alignment)
+        return label
+
+    def __createInputField__(self, label_text, line_edit):
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__(label_text))
+        tmp_layout.addWidget(line_edit)
+        self.layout.addLayout(tmp_layout)
+
+    def add_birth_date(self):
+        dialog = GetDateDlg(self)
+        if dialog.exec_() == QDialog.Accepted:
+            tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
+            self.birthday.setText(str(tmp))
+
+    def add_empl_date(self):
+        dialog = GetDateDlg(self)
+        if dialog.exec_() == QDialog.Accepted:
+            tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
+            self.employ_date.setText(str(tmp))
+
+    def add_unempl_date(self):
+        dialog = GetDateDlg(self)
+        if dialog.exec_() == QDialog.Accepted:
+            tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
+            self.unemploy_date.setText(str(tmp))
+            
+class EditWorkerDlg(QDialog):
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+        self.setWindowTitle('Отредактировать работника')
+        self.layout = QVBoxLayout(self)
+
+        self.hbox_layout = QHBoxLayout()
+        self.ok_button = QPushButton('Ok', self)
+        self.ok_button.clicked.connect(self.accept)
+        self.hbox_layout.addWidget(self.ok_button)
+        self.cancel_button = QPushButton('Cancel', self)
+        self.cancel_button.clicked.connect(self.reject)
+        self.hbox_layout.addWidget(self.cancel_button)
+
+        self.surname = QLineEdit(self)
+        self.__createInputField__('Фамилия', self.surname)
+
+        self.name = QLineEdit(self)
+        self.__createInputField__('Имя', self.name)
+
+        self.fathername = QLineEdit(self)
+        self.__createInputField__('Отчество', self.fathername)
+
+        self.education = QLineEdit(self)
+        self.__createInputField__('Образование', self.education)
+
+        self.town = QLineEdit(self)
+        self.__createInputField__('Город', self.town)
+
+        self.address = QLineEdit(self)
+        self.__createInputField__('Адрес', self.address)
+
+        self.phonenumber = QLineEdit(self)
+        self.__createInputField__('Номер телефона', self.phonenumber)
+
+        self.birthday = QLineEdit(self)
+        self.birth_btn = QPushButton('•••', self)
+        self.birth_btn.setFixedWidth(25)
+        self.birth_btn.clicked.connect(lambda: self.add_birth_date())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__('Дата рождения'))
+        tmp_layout.addWidget(self.birthday)
+        tmp_layout.addWidget(self.birth_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.employ_date = QLineEdit(self)
+        self.empl_btn = QPushButton('•••', self)
+        self.empl_btn.setFixedWidth(25)
+        self.empl_btn.clicked.connect(lambda: self.add_empl_date())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__('Дата приёма на работу'))
+        tmp_layout.addWidget(self.employ_date)
+        tmp_layout.addWidget(self.empl_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.salary = QLineEdit(self)
+        self.__createInputField__('Зар. плата', self.salary)
+
+        self.position = QLineEdit(self)
+        self.__createInputField__('Должность', self.position)
+
+        self.category = QLineEdit(self)
+        self.__createInputField__('Разряд', self.category)
+
+        self.unemploy_date = QLineEdit(self)
+        self.unempl_btn = QPushButton('•••', self)
+        self.unempl_btn.setFixedWidth(25)
+        self.unempl_btn.clicked.connect(lambda: self.add_unempl_date())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__('Дата увольнения'))
+        tmp_layout.addWidget(self.unemploy_date)
+        tmp_layout.addWidget(self.unempl_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.layout.addLayout(self.hbox_layout)
+
+    def __createLabel__(self, text, alignment= None):#Qt.AlignVCenter | Qt.AlignRight):
+        label = QLabel(text)
+        label.setFixedSize(150, 20)
+        # label.setAlignment(alignment)
         return label
 
     def __createInputField__(self, label_text, line_edit):
@@ -217,10 +324,10 @@ class AddMachineDlg(QDialog):
 
         self.layout.addLayout(self.hbox_layout)
 
-    def __createLabel__(self, text, alignment=Qt.AlignVCenter | Qt.AlignRight):
+    def __createLabel__(self, text, alignment=None):#Qt.AlignVCenter | Qt.AlignRight):
         label = QLabel(text)
         label.setFixedSize(150, 20)
-        label.setAlignment(alignment)
+        # label.setAlignment(alignment)
         return label
 
     def __createInputField__(self, label_text, line_edit):
@@ -228,3 +335,24 @@ class AddMachineDlg(QDialog):
         tmp_layout.addWidget(self.__createLabel__(label_text))
         tmp_layout.addWidget(line_edit)
         self.layout.addLayout(tmp_layout)
+
+class YesNoDlg(QDialog):
+    def __init__(self, title, message, parent=None):
+        QDialog.__init__(self, parent)
+        self.setWindowTitle(title)
+        self.layout=QVBoxLayout(self)
+
+        msg = QLabel(message)
+        msg.setWordWrap(True)
+        self.layout.addWidget(msg)
+
+        self.hbox_layout=QHBoxLayout()
+        self.ok_button=QPushButton('Да',self)
+        self.ok_button.clicked.connect(self.accept)
+        self.hbox_layout.addWidget(self.ok_button)
+        self.cancel_button=QPushButton('Нет',self)
+        self.cancel_button.clicked.connect(self.reject)
+        self.hbox_layout.addWidget(self.cancel_button)
+
+        self.layout.addLayout(self.hbox_layout)
+

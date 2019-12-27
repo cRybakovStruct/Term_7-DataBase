@@ -10,6 +10,10 @@ from PyQt5.QtCore import QSize
 from additional_modules import *
 from dialogs import *
 
+from classes_for_alchemy_orm import Base, Worker, Fixation
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
@@ -76,11 +80,17 @@ class MainWindow(QMainWindow):
         self.performers_table_headers = ['repair_id',
                                          'worker_id']
 
-        self.connection = self.getConnection()
+        self.connection, self.engine = self.getConnection()
         while not self.connection:
             QMessageBox.critical(
                 None, "Error", "Wrong authorization parameters")
             self.connection = self.getConnection()
+            
+        Base.metadata.create_all(self.engine)
+        self.Session = sessionmaker(bind=self.engine)
+        self.session = self.Session()
+        # for instance in session.query(Worker).order_by(Worker.idworker):
+        #     print(instance)
 
         self.connection.autocommit(True)
         self.createWindow()
@@ -130,9 +140,21 @@ class MainWindow(QMainWindow):
         clearFilterBtn.setFixedWidth(70)
         clearFilterBtn.clicked.connect(lambda: self.clearWorkersFilter())
 
+        controlls = QVBoxLayout(self)
         addWorkerBtn = QPushButton('Add worker', self)
-        addWorkerBtn.setFixedWidth(70)
+        addWorkerBtn.setFixedWidth(75)
         addWorkerBtn.clicked.connect(lambda: self.addWorker())
+        controlls.addWidget(addWorkerBtn)
+        
+        editWorkerBtn = QPushButton('Edit worker', self)
+        editWorkerBtn.setFixedWidth(75)
+        editWorkerBtn.clicked.connect(lambda: self.editWorker())
+        controlls.addWidget(editWorkerBtn)
+        
+        delWorkerBtn = QPushButton('Delete worker', self)
+        delWorkerBtn.setFixedWidth(75)
+        delWorkerBtn.clicked.connect(lambda: self.deleteWorker())
+        controlls.addWidget(delWorkerBtn)
 
         filterLayout.addWidget(self.workersFilterColumn)
         filterLayout.addWidget(self.workersFilterValue)
@@ -142,13 +164,14 @@ class MainWindow(QMainWindow):
         filter_group.setLayout(filterLayout)
 
         toolbar.addWidget(filter_group)
-        toolbar.addWidget(addWorkerBtn)
+        toolbar.addLayout(controlls)
 
-        table = createTableFromMYSQLDB(headers=self.workers_table_headers)
+        self.workers_table = createTableFromMYSQLDB(headers=self.workers_table_headers)
+        # self.workers_table.itemDoubleClicked.connect(lambda: self.deleteWorker())
 
         self.workers_grid_layout = QGridLayout()
         self.workers_grid_layout.addLayout(toolbar, 0, 0)
-        self.workers_grid_layout.addWidget(table, 1, 0)
+        self.workers_grid_layout.addWidget(self.workers_table, 1, 0)
         workersWidget.setLayout(self.workers_grid_layout)
         self.clearWorkersFilter()
         return workersWidget
@@ -163,7 +186,7 @@ class MainWindow(QMainWindow):
         dialog = AddWorkerDlg(shops_id, self)
         if dialog.exec_() == QDialog.Accepted:
             try:
-                args = (dialog.surname.text() if dialog.surname.text() != "" else None,
+                new_worker = Worker(dialog.surname.text() if dialog.surname.text() != "" else None,
                         dialog.name.text() if dialog.name.text() != "" else None,
                         dialog.fathername.text() if dialog.fathername.text() != "" else None,
                         dialog.education.text() if dialog.education.text() != "" else None,
@@ -175,10 +198,20 @@ class MainWindow(QMainWindow):
                         dialog.salary.text() if dialog.salary.text() != "" else None,
                         dialog.position.text() if dialog.position.text() != "" else None,
                         dialog.category.text() if dialog.category.text() != "" else None,
-                        dialog.unemploy_date.text() if dialog.unemploy_date.text() != "" else None,
-                        dialog.shop.currentText() if dialog.shop.text() != "" else None)
-                cursor.execute(
-                    "CALL INSERT_WORKER(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", args)
+                        dialog.unemploy_date.text() if dialog.unemploy_date.text() != "" else None)
+                        # dialog.shop.currentText() if dialog.shop.currentText() != "" else None)
+                self.session.add(new_worker)                
+                self.session.commit()
+                
+                if dialog.shop.currentText() != "":
+                    new_fixation = Fixation(new_worker.idworker, dialog.shop.currentText())
+                    print(new_fixation)
+                    self.session.add(new_fixation)
+                    self.session.commit()
+                
+                
+                # cursor.execute(
+                #     "CALL INSERT_WORKER(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", args)
                 self.clearWorkersFilter()
             except Exception as err:
                 QMessageBox.critical(None, 'Error!', str(err))
@@ -187,16 +220,75 @@ class MainWindow(QMainWindow):
             print('Cancelled')
             dialog.deleteLater()
 
+    def editWorker(self):
+        items = self.workers_table.selectedItems()
+        row, res = getRow(items)
+        if not res:
+            QMessageBox.critical(None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            dialog = EditWorkerDlg(self)
+            dialog.surname.setText(self.workers_table.item(row, 1).text())
+            dialog.name.setText(self.workers_table.item(row, 2).text())
+            dialog.fathername.setText(self.workers_table.item(row, 3).text())
+            dialog.education.setText(self.workers_table.item(row, 4).text())
+            dialog.town.setText(self.workers_table.item(row, 5).text())
+            dialog.address.setText(self.workers_table.item(row, 6).text())
+            dialog.phonenumber.setText(self.workers_table.item(row, 7).text())
+            dialog.birthday.setText(self.workers_table.item(row, 8).text())
+            dialog.employ_date.setText(self.workers_table.item(row, 9).text())
+            dialog.salary.setText(self.workers_table.item(row, 10).text())
+            dialog.position.setText(self.workers_table.item(row, 11).text())
+            dialog.category.setText(self.workers_table.item(row, 12).text())
+            dialog.unemploy_date.setText(self.workers_table.item(row, 13).text())
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    editing_worker = self.session.query(Worker).filter_by(idworker=self.workers_table.item(row, 0).text()).first()
+                    editing_worker.surname=dialog.surname.text() if dialog.surname.text() != "" else None
+                    editing_worker.name=dialog.name.text() if dialog.name.text() != "" else None
+                    editing_worker.fathername=dialog.fathername.text() if dialog.fathername.text() != "" else None
+                    editing_worker.education=dialog.education.text() if dialog.education.text() != "" else None
+                    editing_worker.town=dialog.town.text() if dialog.town.text() != "" else None
+                    editing_worker.address=dialog.address.text() if dialog.address.text() != "" else None
+                    editing_worker.phonenumber=dialog.phonenumber.text() if dialog.phonenumber.text() != "" else None
+                    editing_worker.birthday=dialog.birthday.text() if dialog.birthday.text() != "" else None
+                    editing_worker.employ_date= dialog.employ_date.text() if dialog.employ_date.text() != "" else None
+                    editing_worker.salary=dialog.salary.text() if dialog.salary.text() != "" else None
+                    editing_worker.position=dialog.position.text() if dialog.position.text() != "" else None
+                    editing_worker.category= dialog.category.text() if dialog.category.text() != "" else None
+                    editing_worker.unemploy_date=dialog.unemploy_date.text() if dialog.unemploy_date.text() != "" else None
+                    self.session.commit()
+                    self.clearWorkersFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+        
+    def deleteWorker(self):
+        items = self.workers_table.selectedItems()
+        row, res = getRow(items)
+        if not res:
+            QMessageBox.critical(None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            deleting_worker = self.session.query(Worker).filter_by(idworker=self.workers_table.item(row, 0).text()).first()
+            dialog = YesNoDlg('Worker deleting', f'Are you really want to delete worker:\n{deleting_worker}?')
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    self.session.delete(deleting_worker)
+                    self.session.commit()
+                    self.clearWorkersFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+
     def showWorkersByFilter(self):
         col = self.workersFilterColumn.currentText()
         cursor = self.connection.cursor()
         cursor.execute("CALL FILTER_WORKERS(%s, %s)",
                        (col, self.workersFilterValue.text()))
         data = cursor.fetchall()
-        print(data)
-        table = createTableFromMYSQLDB(data, self.workers_table_headers, self)
-        table.resizeColumnsToContents()
-        self.workers_grid_layout.addWidget(table, 1, 0)
+        # print(data)
+        self.workers_table = createTableFromMYSQLDB(data, self.workers_table_headers, self)
+        self.workers_table.resizeColumnsToContents()
+        self.workers_grid_layout.addWidget(self.workers_table, 1, 0)
         self.workersFilterValue.setText('')
         self.workersFilterColumn.setCurrentIndex(0)
 
@@ -204,12 +296,12 @@ class MainWindow(QMainWindow):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_WORKERS()")
         data = cursor.fetchall()
-        print(data)
-        table = createTableFromMYSQLDB(data, self.workers_table_headers, self)
-        table.resizeColumnsToContents()
-        self.workers_grid_layout.addWidget(table, 1, 0)
+        # print(data)
+        self.workers_table = createTableFromMYSQLDB(data, self.workers_table_headers, self)
+        self.workers_table.resizeColumnsToContents()
+        self.workers_grid_layout.addWidget(self.workers_table, 1, 0)
         self.workersFilterValue.setText('')
-        self.workersFilterColumn.setCurrentIndex(0)
+        self.workersFilterColumn.setCurrentIndex(0)        
 
 # endregion
 
@@ -267,8 +359,8 @@ class MainWindow(QMainWindow):
                 pass
                 # TODO: Вызвать хранимую процедуру и передать ей все необхдимые параметры
                 self.clearMachinesFilter()
-            except Exception:
-                return
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
 
         else:
             print('Cancelled')
@@ -286,7 +378,7 @@ class MainWindow(QMainWindow):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_MACHINES()")
         data = cursor.fetchall()
-        print(data)
+        # print(data)
         table = createTableFromMYSQLDB(data, self.machines_table_headers, self)
         table.resizeColumnsToContents()
         self.machines_grid_layout.addWidget(table, 1, 0)
@@ -341,60 +433,16 @@ class MainWindow(QMainWindow):
         return shops_widget
 
     def addShop(self):
-        # cursor = self.connection.cursor()
-        # cursor.execute("CALL GET_SHOPS_IDS()")
-        # data = cursor.fetchall()
-        # shops_id = [None]
-        # for value in list(data):
-        #     shops_id.append(str(value[0]))
-        # dialog = AddWorkerDlg(shops_id, self)
-        # if dialog.exec_() == QDialog.Accepted:
-        #     try:
-        #         args = (dialog.surname.text(),
-        #                 dialog.name.text(),
-        #                 dialog.fathername.text(),
-        #                 dialog.education.text(),
-        #                 dialog.town.text(),
-        #                 dialog.address.text(),
-        #                 dialog.phonenumber.text(),
-        #                 dialog.birthday.text(),
-        #                 dialog.employ_date.text(),
-        #                 dialog.salary.text(),
-        #                 dialog.position.text(),
-        #                 dialog.category.text(),
-        #                 dialog.unemploy_date.text(),
-        #                 dialog.shop.currentText())
-        #         cursor.execute(
-        #             "CALL INSERT_WORKER(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", args)
-        #         # TODO: Есть заготовка для триггера, который будет генерировать ошибку в случае некорректных дат
-        #         self.clearWorkersFilter()
-        #     except Exception as err:
-        #         print(err)
-
-        # else:
-        #     print('Cancelled')
-        #     dialog.deleteLater()
         pass
 
     def showShopsByFilter(self):
-        # col = self.shopsFilterColumn.currentText()
-        # cursor = self.connection.cursor()
-        # cursor.execute("CALL FILTER_SHOPS(%s, %s)",
-        #                (col, self.shopsFilterValue.text()))
-        # data = cursor.fetchall()
-        # print(data)
-        # table = createTableFromMYSQLDB(data, self.shops_table_headers, self)
-        # table.resizeColumnsToContents()
-        # self.shops_grid_layout.addWidget(table, 1, 0)
-        # self.shopsFilterValue.setText('')
-        # self.shopsFilterColumn.setCurrentIndex(0)
         pass
 
     def clearShopsFilter(self):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_SHOPS()")
         data = cursor.fetchall()
-        print(data)
+        # print(data)
         table = createTableFromMYSQLDB(data, self.shops_table_headers, self)
         table.resizeColumnsToContents()
         self.shops_grid_layout.addWidget(table, 1, 0)
@@ -449,60 +497,16 @@ class MainWindow(QMainWindow):
         return equipment_widget
 
     def addEquipment(self):
-        # cursor = self.connection.cursor()
-        # cursor.execute("CALL GET_SHOPS_IDS()")
-        # data = cursor.fetchall()
-        # shops_id = [None]
-        # for value in list(data):
-        #     shops_id.append(str(value[0]))
-        # dialog = AddWorkerDlg(shops_id, self)
-        # if dialog.exec_() == QDialog.Accepted:
-        #     try:
-        #         args = (dialog.surname.text(),
-        #                 dialog.name.text(),
-        #                 dialog.fathername.text(),
-        #                 dialog.education.text(),
-        #                 dialog.town.text(),
-        #                 dialog.address.text(),
-        #                 dialog.phonenumber.text(),
-        #                 dialog.birthday.text(),
-        #                 dialog.employ_date.text(),
-        #                 dialog.salary.text(),
-        #                 dialog.position.text(),
-        #                 dialog.category.text(),
-        #                 dialog.unemploy_date.text(),
-        #                 dialog.shop.currentText())
-        #         cursor.execute(
-        #             "CALL INSERT_WORKER(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", args)
-        #         # TODO: Есть заготовка для триггера, который будет генерировать ошибку в случае некорректных дат
-        #         self.clearWorkersFilter()
-        #     except Exception as err:
-        #         print(err)
-
-        # else:
-        #     print('Cancelled')
-        #     dialog.deleteLater()
         pass
 
     def showEquipmentByFilter(self):
-        # col = self.shopsFilterColumn.currentText()
-        # cursor = self.connection.cursor()
-        # cursor.execute("CALL FILTER_SHOPS(%s, %s)",
-        #                (col, self.shopsFilterValue.text()))
-        # data = cursor.fetchall()
-        # print(data)
-        # table = createTableFromMYSQLDB(data, self.shops_table_headers, self)
-        # table.resizeColumnsToContents()
-        # self.shops_grid_layout.addWidget(table, 1, 0)
-        # self.shopsFilterValue.setText('')
-        # self.shopsFilterColumn.setCurrentIndex(0)
         pass
 
     def clearEquipmentFilter(self):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_EQUIPMENT()")
         data = cursor.fetchall()
-        print(data)
+        # print(data)
         table = createTableFromMYSQLDB(
             data, self.equipment_table_headers, self)
         table.resizeColumnsToContents()
@@ -558,60 +562,16 @@ class MainWindow(QMainWindow):
         return repairs_widget
 
     def addRepairs(self):
-        # cursor = self.connection.cursor()
-        # cursor.execute("CALL GET_SHOPS_IDS()")
-        # data = cursor.fetchall()
-        # shops_id = [None]
-        # for value in list(data):
-        #     shops_id.append(str(value[0]))
-        # dialog = AddWorkerDlg(shops_id, self)
-        # if dialog.exec_() == QDialog.Accepted:
-        #     try:
-        #         args = (dialog.surname.text(),
-        #                 dialog.name.text(),
-        #                 dialog.fathername.text(),
-        #                 dialog.education.text(),
-        #                 dialog.town.text(),
-        #                 dialog.address.text(),
-        #                 dialog.phonenumber.text(),
-        #                 dialog.birthday.text(),
-        #                 dialog.employ_date.text(),
-        #                 dialog.salary.text(),
-        #                 dialog.position.text(),
-        #                 dialog.category.text(),
-        #                 dialog.unemploy_date.text(),
-        #                 dialog.shop.currentText())
-        #         cursor.execute(
-        #             "CALL INSERT_WORKER(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", args)
-        #         # TODO: Есть заготовка для триггера, который будет генерировать ошибку в случае некорректных дат
-        #         self.clearWorkersFilter()
-        #     except Exception as err:
-        #         print(err)
-
-        # else:
-        #     print('Cancelled')
-        #     dialog.deleteLater()
         pass
 
     def showRepairsByFilter(self):
-        # col = self.shopsFilterColumn.currentText()
-        # cursor = self.connection.cursor()
-        # cursor.execute("CALL FILTER_SHOPS(%s, %s)",
-        #                (col, self.shopsFilterValue.text()))
-        # data = cursor.fetchall()
-        # print(data)
-        # table = createTableFromMYSQLDB(data, self.shops_table_headers, self)
-        # table.resizeColumnsToContents()
-        # self.shops_grid_layout.addWidget(table, 1, 0)
-        # self.shopsFilterValue.setText('')
-        # self.shopsFilterColumn.setCurrentIndex(0)
         pass
 
     def clearRepairsFilter(self):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_REPAIRS()")
         data = cursor.fetchall()
-        print(data)
+        # print(data)
         table = createTableFromMYSQLDB(
             data, self.repairs_table_headers, self)
         table.resizeColumnsToContents()
@@ -667,60 +627,16 @@ class MainWindow(QMainWindow):
         return fixations_widget
 
     def addFixations(self):
-        # cursor = self.connection.cursor()
-        # cursor.execute("CALL GET_SHOPS_IDS()")
-        # data = cursor.fetchall()
-        # shops_id = [None]
-        # for value in list(data):
-        #     shops_id.append(str(value[0]))
-        # dialog = AddWorkerDlg(shops_id, self)
-        # if dialog.exec_() == QDialog.Accepted:
-        #     try:
-        #         args = (dialog.surname.text(),
-        #                 dialog.name.text(),
-        #                 dialog.fathername.text(),
-        #                 dialog.education.text(),
-        #                 dialog.town.text(),
-        #                 dialog.address.text(),
-        #                 dialog.phonenumber.text(),
-        #                 dialog.birthday.text(),
-        #                 dialog.employ_date.text(),
-        #                 dialog.salary.text(),
-        #                 dialog.position.text(),
-        #                 dialog.category.text(),
-        #                 dialog.unemploy_date.text(),
-        #                 dialog.shop.currentText())
-        #         cursor.execute(
-        #             "CALL INSERT_WORKER(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", args)
-        #         # TODO: Есть заготовка для триггера, который будет генерировать ошибку в случае некорректных дат
-        #         self.clearWorkersFilter()
-        #     except Exception as err:
-        #         print(err)
-
-        # else:
-        #     print('Cancelled')
-        #     dialog.deleteLater()
         pass
 
     def showFixationsByFilter(self):
-        # col = self.shopsFilterColumn.currentText()
-        # cursor = self.connection.cursor()
-        # cursor.execute("CALL FILTER_SHOPS(%s, %s)",
-        #                (col, self.shopsFilterValue.text()))
-        # data = cursor.fetchall()
-        # print(data)
-        # table = createTableFromMYSQLDB(data, self.shops_table_headers, self)
-        # table.resizeColumnsToContents()
-        # self.shops_grid_layout.addWidget(table, 1, 0)
-        # self.shopsFilterValue.setText('')
-        # self.shopsFilterColumn.setCurrentIndex(0)
         pass
 
     def clearFixationsFilter(self):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_FIXATIONS()")
         data = cursor.fetchall()
-        print(data)
+        # print(data)
         table = createTableFromMYSQLDB(
             data, self.fixations_table_headers, self)
         table.resizeColumnsToContents()
@@ -776,60 +692,16 @@ class MainWindow(QMainWindow):
         return performers_widget
 
     def addPerformers(self):
-        # cursor = self.connection.cursor()
-        # cursor.execute("CALL GET_SHOPS_IDS()")
-        # data = cursor.fetchall()
-        # shops_id = [None]
-        # for value in list(data):
-        #     shops_id.append(str(value[0]))
-        # dialog = AddWorkerDlg(shops_id, self)
-        # if dialog.exec_() == QDialog.Accepted:
-        #     try:
-        #         args = (dialog.surname.text(),
-        #                 dialog.name.text(),
-        #                 dialog.fathername.text(),
-        #                 dialog.education.text(),
-        #                 dialog.town.text(),
-        #                 dialog.address.text(),
-        #                 dialog.phonenumber.text(),
-        #                 dialog.birthday.text(),
-        #                 dialog.employ_date.text(),
-        #                 dialog.salary.text(),
-        #                 dialog.position.text(),
-        #                 dialog.category.text(),
-        #                 dialog.unemploy_date.text(),
-        #                 dialog.shop.currentText())
-        #         cursor.execute(
-        #             "CALL INSERT_WORKER(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", args)
-        #         # TODO: Есть заготовка для триггера, который будет генерировать ошибку в случае некорректных дат
-        #         self.clearWorkersFilter()
-        #     except Exception as err:
-        #         print(err)
-
-        # else:
-        #     print('Cancelled')
-        #     dialog.deleteLater()
         pass
 
     def showPerformersByFilter(self):
-        # col = self.shopsFilterColumn.currentText()
-        # cursor = self.connection.cursor()
-        # cursor.execute("CALL FILTER_SHOPS(%s, %s)",
-        #                (col, self.shopsFilterValue.text()))
-        # data = cursor.fetchall()
-        # print(data)
-        # table = createTableFromMYSQLDB(data, self.shops_table_headers, self)
-        # table.resizeColumnsToContents()
-        # self.shops_grid_layout.addWidget(table, 1, 0)
-        # self.shopsFilterValue.setText('')
-        # self.shopsFilterColumn.setCurrentIndex(0)
         pass
 
     def clearPerformersFilter(self):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_PERFORMERS()")
         data = cursor.fetchall()
-        print(data)
+        # print(data)
         table = createTableFromMYSQLDB(
             data, self.performers_table_headers, self)
         table.resizeColumnsToContents()
@@ -851,9 +723,13 @@ class MainWindow(QMainWindow):
                                              passwd=dialog.passwd.text(),
                                              db="rmc",
                                              charset='utf8')
-                return connection
-            except Exception:
-                return
+                engine = create_engine(
+                    f"mysql://{dialog.login.text()}:{dialog.passwd.text()}@localhost:3306/rmc?charset=utf8", echo=False)
+                
+                
+                return (connection, engine)
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
 
         else:
             print('Cancelled')
