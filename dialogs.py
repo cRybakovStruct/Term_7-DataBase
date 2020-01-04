@@ -1,5 +1,10 @@
-from PyQt5.QtWidgets import QCalendarWidget, QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
+from PyQt5.QtWidgets import QCalendarWidget, QCheckBox, QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout
+from additional_modules import createTableFromMYSQLDB, getRow
 # from PyQt5 import Qt
+
+HEADERS_FOR_WORKER_SELECTION = ['idworker', 'surname', 'name', 'fathername']
+HEADERS_FOR_EQUIPMENT_SELECTION = ['serial_number', 'model', 'placement']
+BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH = 25
 
 
 class GetDateDlg(QDialog):
@@ -33,10 +38,10 @@ class AuthorizationDlg(QDialog):
         self.cancel_button.clicked.connect(self.reject)
         self.hbox_layout.addWidget(self.cancel_button)
 
-        self.layout.addWidget(QLabel("Логин"))
+        self.layout.addWidget(QLabel("Логин*"))
         self.login = QLineEdit(self)
         self.layout.addWidget(self.login)
-        self.layout.addWidget(QLabel("Пароль (можно без пароля)"))
+        self.layout.addWidget(QLabel("Пароль"))
         self.passwd = QLineEdit(self)
         self.layout.addWidget(self.passwd)
         self.layout.addLayout(self.hbox_layout)
@@ -58,10 +63,10 @@ class AddWorkerDlg(QDialog):
         self.hbox_layout.addWidget(self.cancel_button)
 
         self.surname = QLineEdit(self)
-        self.__createInputField__('Фамилия', self.surname)
+        self.__createInputField__('Фамилия*', self.surname)
 
         self.name = QLineEdit(self)
-        self.__createInputField__('Имя', self.name)
+        self.__createInputField__('Имя*', self.name)
 
         self.fathername = QLineEdit(self)
         self.__createInputField__('Отчество', self.fathername)
@@ -80,32 +85,32 @@ class AddWorkerDlg(QDialog):
 
         self.birthday = QLineEdit(self)
         self.birth_btn = QPushButton('•••', self)
-        self.birth_btn.setFixedWidth(25)
+        self.birth_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
         self.birth_btn.clicked.connect(lambda: self.add_birth_date())
         tmp_layout = QHBoxLayout(self)
-        tmp_layout.addWidget(self.__createLabel__('Дата рождения'))
+        tmp_layout.addWidget(self.__createLabel__('Дата рождения*'))
         tmp_layout.addWidget(self.birthday)
         tmp_layout.addWidget(self.birth_btn)
         self.layout.addLayout(tmp_layout)
 
         self.employ_date = QLineEdit(self)
         self.empl_btn = QPushButton('•••', self)
-        self.empl_btn.setFixedWidth(25)
+        self.empl_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
         self.empl_btn.clicked.connect(lambda: self.add_empl_date())
         tmp_layout = QHBoxLayout(self)
-        tmp_layout.addWidget(self.__createLabel__('Дата приёма на работу'))
+        tmp_layout.addWidget(self.__createLabel__('Дата приёма на работу*'))
         tmp_layout.addWidget(self.employ_date)
         tmp_layout.addWidget(self.empl_btn)
         self.layout.addLayout(tmp_layout)
 
         self.salary = QLineEdit(self)
-        self.__createInputField__('Зар. плата', self.salary)
+        self.__createInputField__('Зар. плата*', self.salary)
 
         self.position = QLineEdit(self)
-        self.__createInputField__('Должность', self.position)
+        self.__createInputField__('Должность*', self.position)
 
         self.category = QLineEdit(self)
-        self.__createInputField__('Разряд', self.category)
+        self.__createInputField__('Разряд*', self.category)
 
         self.shop = QComboBox(self)
         self.shop.addItems(self.shops)
@@ -113,7 +118,7 @@ class AddWorkerDlg(QDialog):
 
         self.unemploy_date = QLineEdit(self)
         self.unempl_btn = QPushButton('•••', self)
-        self.unempl_btn.setFixedWidth(25)
+        self.unempl_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
         self.unempl_btn.clicked.connect(lambda: self.add_unempl_date())
         tmp_layout = QHBoxLayout(self)
         tmp_layout.addWidget(self.__createLabel__('Дата увольнения'))
@@ -170,10 +175,10 @@ class EditWorkerDlg(QDialog):
         self.hbox_layout.addWidget(self.cancel_button)
 
         self.surname = QLineEdit(self)
-        self.__createInputField__('Фамилия', self.surname)
+        self.__createInputField__('Фамилия*', self.surname)
 
         self.name = QLineEdit(self)
-        self.__createInputField__('Имя', self.name)
+        self.__createInputField__('Имя*', self.name)
 
         self.fathername = QLineEdit(self)
         self.__createInputField__('Отчество', self.fathername)
@@ -192,7 +197,7 @@ class EditWorkerDlg(QDialog):
 
         self.birthday = QLineEdit(self)
         self.birth_btn = QPushButton('•••', self)
-        self.birth_btn.setFixedWidth(25)
+        self.birth_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
         self.birth_btn.clicked.connect(lambda: self.add_birth_date())
         tmp_layout = QHBoxLayout(self)
         tmp_layout.addWidget(self.__createLabel__('Дата рождения'))
@@ -202,26 +207,26 @@ class EditWorkerDlg(QDialog):
 
         self.employ_date = QLineEdit(self)
         self.empl_btn = QPushButton('•••', self)
-        self.empl_btn.setFixedWidth(25)
+        self.empl_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
         self.empl_btn.clicked.connect(lambda: self.add_empl_date())
         tmp_layout = QHBoxLayout(self)
-        tmp_layout.addWidget(self.__createLabel__('Дата приёма на работу'))
+        tmp_layout.addWidget(self.__createLabel__('Дата приёма на работу*'))
         tmp_layout.addWidget(self.employ_date)
         tmp_layout.addWidget(self.empl_btn)
         self.layout.addLayout(tmp_layout)
 
         self.salary = QLineEdit(self)
-        self.__createInputField__('Зар. плата', self.salary)
+        self.__createInputField__('Зар. плата*', self.salary)
 
         self.position = QLineEdit(self)
-        self.__createInputField__('Должность', self.position)
+        self.__createInputField__('Должность*', self.position)
 
         self.category = QLineEdit(self)
-        self.__createInputField__('Разряд', self.category)
+        self.__createInputField__('Разряд*', self.category)
 
         self.unemploy_date = QLineEdit(self)
         self.unempl_btn = QPushButton('•••', self)
-        self.unempl_btn.setFixedWidth(25)
+        self.unempl_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
         self.unempl_btn.clicked.connect(lambda: self.add_unempl_date())
         tmp_layout = QHBoxLayout(self)
         tmp_layout.addWidget(self.__createLabel__('Дата увольнения'))
@@ -280,25 +285,25 @@ class AddMachineDlg(QDialog):
         self.hbox_layout.addWidget(self.cancel_button)
 
         self.model = QLineEdit(self)
-        self.__createInputField__('Модель', self.model)
+        self.__createInputField__('Модель*', self.model)
 
         self.type = QLineEdit(self)
-        self.__createInputField__('Тип', self.type)
+        self.__createInputField__('Тип*', self.type)
 
         self.lenght = QLineEdit(self)
-        self.__createInputField__('Длина', self.lenght)
+        self.__createInputField__('Длина*', self.lenght)
 
         self.width = QLineEdit(self)
-        self.__createInputField__('Ширина', self.width)
+        self.__createInputField__('Ширина*', self.width)
 
         self.height = QLineEdit(self)
-        self.__createInputField__('Высота', self.height)
+        self.__createInputField__('Высота*', self.height)
 
         self.weight = QLineEdit(self)
-        self.__createInputField__('Вес', self.weight)
+        self.__createInputField__('Вес*', self.weight)
 
         self.power = QLineEdit(self)
-        self.__createInputField__('Мощность', self.power)
+        self.__createInputField__('Мощность*', self.power)
 
         self.detail_lenght = QLineEdit(self)
         self.__createInputField__('Макс. длина заготовки', self.detail_lenght)
@@ -340,6 +345,165 @@ class AddMachineDlg(QDialog):
         tmp_layout.addWidget(line_edit)
         self.layout.addLayout(tmp_layout)
 
+# TODO: Добавить диалог на редактирование оборудования
+
+# TODO: Добавить диалог на создание цеха
+
+# TODO: Добавить диалог на редактирование цеха
+
+# TODO: Добавить диалог на создание станка
+
+# TODO: Добавить диалог на редактирование станка
+
+
+class AddRepairDlg(QDialog):
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+        self.parent = parent
+        self.setWindowTitle('Добавить ремонт')
+        self.layout = QVBoxLayout(self)
+
+        self.hbox_layout = QHBoxLayout()
+
+        self.ok_button = QPushButton('Ok', self)
+        self.ok_button.clicked.connect(self.accept)
+        self.hbox_layout.addWidget(self.ok_button)
+
+        self.cancel_button = QPushButton('Cancel', self)
+        self.cancel_button.clicked.connect(self.reject)
+        self.hbox_layout.addWidget(self.cancel_button)
+
+        self.repair_name = QLineEdit(self)
+        self.__createInputField__('Наименование ремонта*', self.repair_name)
+
+        self.is_planned = QCheckBox('(Да/Нет)')
+        self.__createInputField__('Запланированный ремонт*', self.is_planned)
+
+        self.receipt_date = QLineEdit(self)
+        self.receipt_btn = QPushButton('•••', self)
+        self.receipt_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.receipt_btn.clicked.connect(lambda: self.add_receipt_date())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__(
+            'Дата поступления в ремонт*'))
+        tmp_layout.addWidget(self.receipt_date)
+        tmp_layout.addWidget(self.receipt_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.start_date = QLineEdit(self)
+        self.start_btn = QPushButton('•••', self)
+        self.start_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.start_btn.clicked.connect(lambda: self.add_start_date())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__('Дата начала ремонта*'))
+        tmp_layout.addWidget(self.start_date)
+        tmp_layout.addWidget(self.start_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.finish_date = QLineEdit(self)
+        self.finish_btn = QPushButton('•••', self)
+        self.finish_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.finish_btn.clicked.connect(lambda: self.add_finish_date())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__('Дата окончания ремонта'))
+        tmp_layout.addWidget(self.finish_date)
+        tmp_layout.addWidget(self.finish_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.responsible_id = QLineEdit(self)
+        self.responsible_btn = QPushButton('•••', self)
+        self.responsible_btn.setFixedWidth(
+            BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.responsible_btn.clicked.connect(lambda: self.add_responsible_id())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__('Ответственный за ремонт*'))
+        tmp_layout.addWidget(self.responsible_id)
+        tmp_layout.addWidget(self.responsible_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.equipment_id = QLineEdit(self)
+        self.equipment_btn = QPushButton('•••', self)
+        self.equipment_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.equipment_btn.clicked.connect(lambda: self.add_equipment_id())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__('Ремонтируемый станок*'))
+        tmp_layout.addWidget(self.equipment_id)
+        tmp_layout.addWidget(self.equipment_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.layout.addLayout(self.hbox_layout)
+
+    def __createLabel__(self, text, alignment=None):
+        label = QLabel(text)
+        label.setFixedSize(150, 20)
+        return label
+
+    def __createInputField__(self, label_text, line_edit):
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__(label_text))
+        tmp_layout.addWidget(line_edit)
+        self.layout.addLayout(tmp_layout)
+
+    def add_receipt_date(self):
+        dialog = GetDateDlg(self)
+        if dialog.exec_() == QDialog.Accepted:
+            tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
+            self.receipt_date.setText(str(tmp))
+
+    def add_start_date(self):
+        dialog = GetDateDlg(self)
+        if dialog.exec_() == QDialog.Accepted:
+            tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
+            self.start_date.setText(str(tmp))
+
+    def add_finish_date(self):
+        dialog = GetDateDlg(self)
+        if dialog.exec_() == QDialog.Accepted:
+            tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
+            self.finish_date.setText(str(tmp))
+
+    def add_responsible_id(self):
+        dialog = SelectWorkerDlg(self.parent)
+        if dialog.exec_() == QDialog.Accepted:
+            try:
+                items = dialog.table.selectedItems()
+                row, res = getRow(items)
+                if (not res) or (row is None):
+                    QMessageBox.critical(
+                        None, 'Warning!', 'Please, select cells in single row')
+                    return
+                else:
+                    self.responsible_id.setText(
+                        f'{dialog.table.item(row, 0).text()} {dialog.table.item(row, 1).text()} {dialog.table.item(row, 2).text()} {dialog.table.item(row, 3).text()}')
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
+
+    def add_equipment_id(self):
+        dialog = SelectEquipmentDlg(self.parent)
+        if dialog.exec_() == QDialog.Accepted:
+            try:
+                items = dialog.table.selectedItems()
+                row, res = getRow(items)
+                if (not res) or (row is None):
+                    QMessageBox.critical(
+                        None, 'Warning!', 'Please, select cells in single row')
+                    return
+                else:
+                    self.equipment_id.setText(
+                        f'{dialog.table.item(row, 0).text()} {dialog.table.item(row, 1).text()} {dialog.table.item(row, 2).text()}')
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
+
+# TODO: Добавить диалог на редактирование ремонта
+
+# TODO: Добавить диалог на создание закрепления
+
+# TODO: Добавить диалог на редактирование закрепления
+
+# TODO: Добавить диалог на создание исполнителя
+
+# TODO: Добавить диалог на редактирование исполнителя
+
 
 class YesNoDlg(QDialog):
     def __init__(self, title, message, parent=None):
@@ -356,6 +520,60 @@ class YesNoDlg(QDialog):
         self.ok_button.clicked.connect(self.accept)
         self.hbox_layout.addWidget(self.ok_button)
         self.cancel_button = QPushButton('Нет', self)
+        self.cancel_button.clicked.connect(self.reject)
+        self.hbox_layout.addWidget(self.cancel_button)
+
+        self.layout.addLayout(self.hbox_layout)
+
+
+class SelectWorkerDlg(QDialog):
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+
+        self.setWindowTitle('Выберите работника')
+        self.layout = QVBoxLayout(self)
+
+        cursor = parent.connection.cursor()
+        cursor.execute("CALL GET_WORKERS_FOR_SELECTION()")
+        data = cursor.fetchall()
+
+        self.table = createTableFromMYSQLDB(
+            data, HEADERS_FOR_WORKER_SELECTION, self)
+        self.table.resizeColumnsToContents()
+        self.layout.addWidget(self.table)
+
+        self.hbox_layout = QHBoxLayout()
+        self.ok_button = QPushButton('Ок', self)
+        self.ok_button.clicked.connect(self.accept)
+        self.hbox_layout.addWidget(self.ok_button)
+        self.cancel_button = QPushButton('Отмена', self)
+        self.cancel_button.clicked.connect(self.reject)
+        self.hbox_layout.addWidget(self.cancel_button)
+
+        self.layout.addLayout(self.hbox_layout)
+
+
+class SelectEquipmentDlg(QDialog):
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+
+        self.setWindowTitle('Выберите станок')
+        self.layout = QVBoxLayout(self)
+
+        cursor = parent.connection.cursor()
+        cursor.execute("CALL GET_EQUIPMENT_FOR_SELECTION()")
+        data = cursor.fetchall()
+
+        self.table = createTableFromMYSQLDB(
+            data, HEADERS_FOR_EQUIPMENT_SELECTION, self)
+        self.table.resizeColumnsToContents()
+        self.layout.addWidget(self.table)
+
+        self.hbox_layout = QHBoxLayout()
+        self.ok_button = QPushButton('Ок', self)
+        self.ok_button.clicked.connect(self.accept)
+        self.hbox_layout.addWidget(self.ok_button)
+        self.cancel_button = QPushButton('Отмена', self)
         self.cancel_button.clicked.connect(self.reject)
         self.hbox_layout.addWidget(self.cancel_button)
 
