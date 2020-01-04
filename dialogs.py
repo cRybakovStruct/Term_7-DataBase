@@ -86,7 +86,7 @@ class AddWorkerDlg(QDialog):
         self.birthday = QLineEdit(self)
         self.birth_btn = QPushButton('•••', self)
         self.birth_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
-        self.birth_btn.clicked.connect(lambda: self.add_birth_date())
+        self.birth_btn.clicked.connect(lambda: self.addBirthDate())
         tmp_layout = QHBoxLayout(self)
         tmp_layout.addWidget(self.__createLabel__('Дата рождения*'))
         tmp_layout.addWidget(self.birthday)
@@ -94,13 +94,13 @@ class AddWorkerDlg(QDialog):
         self.layout.addLayout(tmp_layout)
 
         self.employ_date = QLineEdit(self)
-        self.empl_btn = QPushButton('•••', self)
-        self.empl_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
-        self.empl_btn.clicked.connect(lambda: self.add_empl_date())
+        self.employ_btn = QPushButton('•••', self)
+        self.employ_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.employ_btn.clicked.connect(lambda: self.addEmployDate())
         tmp_layout = QHBoxLayout(self)
         tmp_layout.addWidget(self.__createLabel__('Дата приёма на работу*'))
         tmp_layout.addWidget(self.employ_date)
-        tmp_layout.addWidget(self.empl_btn)
+        tmp_layout.addWidget(self.employ_btn)
         self.layout.addLayout(tmp_layout)
 
         self.salary = QLineEdit(self)
@@ -117,13 +117,13 @@ class AddWorkerDlg(QDialog):
         self.__createInputField__('Цех', self.shop)
 
         self.unemploy_date = QLineEdit(self)
-        self.unempl_btn = QPushButton('•••', self)
-        self.unempl_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
-        self.unempl_btn.clicked.connect(lambda: self.add_unempl_date())
+        self.unemploy_btn = QPushButton('•••', self)
+        self.unemploy_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.unemploy_btn.clicked.connect(lambda: self.addUnemployDate())
         tmp_layout = QHBoxLayout(self)
         tmp_layout.addWidget(self.__createLabel__('Дата увольнения'))
         tmp_layout.addWidget(self.unemploy_date)
-        tmp_layout.addWidget(self.unempl_btn)
+        tmp_layout.addWidget(self.unemploy_btn)
         self.layout.addLayout(tmp_layout)
 
         self.layout.addLayout(self.hbox_layout)
@@ -141,19 +141,19 @@ class AddWorkerDlg(QDialog):
         tmp_layout.addWidget(line_edit)
         self.layout.addLayout(tmp_layout)
 
-    def add_birth_date(self):
+    def addBirthDate(self):
         dialog = GetDateDlg(self)
         if dialog.exec_() == QDialog.Accepted:
             tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
             self.birthday.setText(str(tmp))
 
-    def add_empl_date(self):
+    def addEmployDate(self):
         dialog = GetDateDlg(self)
         if dialog.exec_() == QDialog.Accepted:
             tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
             self.employ_date.setText(str(tmp))
 
-    def add_unempl_date(self):
+    def addUnemployDate(self):
         dialog = GetDateDlg(self)
         if dialog.exec_() == QDialog.Accepted:
             tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
@@ -198,7 +198,7 @@ class EditWorkerDlg(QDialog):
         self.birthday = QLineEdit(self)
         self.birth_btn = QPushButton('•••', self)
         self.birth_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
-        self.birth_btn.clicked.connect(lambda: self.add_birth_date())
+        self.birth_btn.clicked.connect(lambda: self.addBirthDate())
         tmp_layout = QHBoxLayout(self)
         tmp_layout.addWidget(self.__createLabel__('Дата рождения'))
         tmp_layout.addWidget(self.birthday)
@@ -206,13 +206,13 @@ class EditWorkerDlg(QDialog):
         self.layout.addLayout(tmp_layout)
 
         self.employ_date = QLineEdit(self)
-        self.empl_btn = QPushButton('•••', self)
-        self.empl_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
-        self.empl_btn.clicked.connect(lambda: self.add_empl_date())
+        self.employ_btn = QPushButton('•••', self)
+        self.employ_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.employ_btn.clicked.connect(lambda: self.addEmployDate())
         tmp_layout = QHBoxLayout(self)
         tmp_layout.addWidget(self.__createLabel__('Дата приёма на работу*'))
         tmp_layout.addWidget(self.employ_date)
-        tmp_layout.addWidget(self.empl_btn)
+        tmp_layout.addWidget(self.employ_btn)
         self.layout.addLayout(tmp_layout)
 
         self.salary = QLineEdit(self)
@@ -225,13 +225,13 @@ class EditWorkerDlg(QDialog):
         self.__createInputField__('Разряд*', self.category)
 
         self.unemploy_date = QLineEdit(self)
-        self.unempl_btn = QPushButton('•••', self)
-        self.unempl_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
-        self.unempl_btn.clicked.connect(lambda: self.add_unempl_date())
+        self.unemploy_btn = QPushButton('•••', self)
+        self.unemploy_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.unemploy_btn.clicked.connect(lambda: self.addUnemployDate())
         tmp_layout = QHBoxLayout(self)
         tmp_layout.addWidget(self.__createLabel__('Дата увольнения'))
         tmp_layout.addWidget(self.unemploy_date)
-        tmp_layout.addWidget(self.unempl_btn)
+        tmp_layout.addWidget(self.unemploy_btn)
         self.layout.addLayout(tmp_layout)
 
         self.layout.addLayout(self.hbox_layout)
@@ -249,19 +249,19 @@ class EditWorkerDlg(QDialog):
         tmp_layout.addWidget(line_edit)
         self.layout.addLayout(tmp_layout)
 
-    def add_birth_date(self):
+    def addBirthDate(self):
         dialog = GetDateDlg(self)
         if dialog.exec_() == QDialog.Accepted:
             tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
             self.birthday.setText(str(tmp))
 
-    def add_empl_date(self):
+    def addEmployDate(self):
         dialog = GetDateDlg(self)
         if dialog.exec_() == QDialog.Accepted:
             tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
             self.employ_date.setText(str(tmp))
 
-    def add_unempl_date(self):
+    def addUnemployDate(self):
         dialog = GetDateDlg(self)
         if dialog.exec_() == QDialog.Accepted:
             tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
@@ -290,8 +290,8 @@ class AddMachineDlg(QDialog):
         self.type = QLineEdit(self)
         self.__createInputField__('Тип*', self.type)
 
-        self.lenght = QLineEdit(self)
-        self.__createInputField__('Длина*', self.lenght)
+        self.length = QLineEdit(self)
+        self.__createInputField__('Длина*', self.length)
 
         self.width = QLineEdit(self)
         self.__createInputField__('Ширина*', self.width)
@@ -305,8 +305,8 @@ class AddMachineDlg(QDialog):
         self.power = QLineEdit(self)
         self.__createInputField__('Мощность*', self.power)
 
-        self.detail_lenght = QLineEdit(self)
-        self.__createInputField__('Макс. длина заготовки', self.detail_lenght)
+        self.detail_length = QLineEdit(self)
+        self.__createInputField__('Макс. длина заготовки', self.detail_length)
 
         self.detail_width = QLineEdit(self)
         self.__createInputField__(
@@ -318,8 +318,8 @@ class AddMachineDlg(QDialog):
         self.tools = QLineEdit(self)
         self.__createInputField__('Инструмент', self.tools)
 
-        self.manufactorer = QLineEdit(self)
-        self.__createInputField__('Страна-производитель', self.manufactorer)
+        self.manufacturer = QLineEdit(self)
+        self.__createInputField__('Страна-производитель', self.manufacturer)
 
         self.firm = QLineEdit(self)
         self.__createInputField__('Фирма-производитель', self.firm)

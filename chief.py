@@ -50,7 +50,7 @@ class MainWindow(QMainWindow):
                                        'detail_width',
                                        'detail_thickness',
                                        'tools',
-                                       'manufactorer',
+                                       'manufacturer',
                                        'firm',
                                        'contact',
                                        'comments']
@@ -340,7 +340,7 @@ class MainWindow(QMainWindow):
 # endregion
 
 
-# regopn Machines
+# region Machines
 
 
     def createMachinesTab(self):
@@ -403,7 +403,7 @@ class MainWindow(QMainWindow):
         if dialog.exec_() == QDialog.Accepted:
             try:
                 pass
-                # TODO: Вызвать хранимую процедуру и передать ей все необхдимые параметры
+                # TODO: Вызвать хранимую процедуру и передать ей все необходимые параметры
                 self.clearMachinesFilter()
             except Exception as err:
                 QMessageBox.critical(None, 'Error!', str(err))
@@ -423,16 +423,12 @@ class MainWindow(QMainWindow):
     def showMachinesByFilter(self):
         col = self.machinesFilterColumn.currentText()
         QMessageBox.critical(None, self.machinesFilterValue.text(), col)
-        # TODO: Здесь я буду вызывать функцию, которая в зависимости от выбранных параметров
-        # будет вызывать хранимую процедуру (или функцию?), которая будет работать тоже
-        # в соответсвии с переданными ей параметрами
-        # Либо просто вызовет сама ханимую процедуру, а та внутри себя уже определит, что и как ей отображать.
+        # TODO: Написать и вызвать хранимую процедуру для фильтрации
 
     def clearMachinesFilter(self):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_MACHINES()")
         data = cursor.fetchall()
-        # print(data)
         table = createTableFromMYSQLDB(data, self.machines_table_headers, self)
         table.resizeColumnsToContents()
         self.machines_grid_layout.addWidget(table, 1, 0)
@@ -676,7 +672,7 @@ class MainWindow(QMainWindow):
         if dialog.exec_() == QDialog.Accepted:
             try:
                 pass
-                # TODO: Вызвать хранимую процедуру и передать ей все необхдимые параметры
+                # TODO: Вызвать хранимую процедуру и передать ей все необходимые параметры
                 self.clearRepairsFilter()
             except Exception as err:
                 QMessageBox.critical(None, 'Error!', str(err))

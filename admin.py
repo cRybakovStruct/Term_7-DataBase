@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QTa
 from PyQt5.QtCore import QSize, Qt
 
 from additional_modules import *
+from dialogs import AuthorizationDlg
 
 
 class MainWindow(QMainWindow):
