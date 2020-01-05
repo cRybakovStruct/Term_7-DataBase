@@ -11,7 +11,7 @@ from additional_modules import *
 from dialogs import *
 
 
-from classes_for_alchemy_orm import Base, Worker, Fixation
+from classes_for_alchemy_orm import Base, Fixation, Repair, Shop, Worker
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
@@ -339,9 +339,7 @@ class MainWindow(QMainWindow):
 
 # endregion
 
-
 # region Machines
-
 
     def createMachinesTab(self):
         machines_widget = QWidget(self)
@@ -485,39 +483,127 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(filter_group)
         toolbar.addLayout(controlls)
 
-        table = createTableFromMYSQLDB(headers=self.shops_table_headers)
+        self.shops_table = createTableFromMYSQLDB(
+            headers=self.shops_table_headers)
 
         self.shops_grid_layout = QGridLayout()
         self.shops_grid_layout.addLayout(toolbar, 0, 0)
-        self.shops_grid_layout.addWidget(table, 1, 0)
+        self.shops_grid_layout.addWidget(self.shops_table, 1, 0)
         shops_widget.setLayout(self.shops_grid_layout)
         self.clearShopsFilter()
         return shops_widget
 
     def addShop(self):
-        # TODO: Написать функцию
-        pass
+        dialog = AddShopDlg(self)
+        if dialog.exec_() == QDialog.Accepted:
+            try:
+                new_shop = Shop(dialog.idshop.text() if dialog.idshop.text() != "" else None,
+                                dialog.chief_IP.text() if dialog.chief_IP.text() != "" else None,
+                                dialog.chief_RP.text() if dialog.chief_RP.text() != "" else None,
+                                dialog.chief_DP.text() if dialog.chief_DP.text() != "" else None,
+                                dialog.chief_VP.text() if dialog.chief_VP.text() != "" else None,
+                                dialog.chief_TP.text() if dialog.chief_TP.text() != "" else None,
+                                dialog.chief_PP.text() if dialog.chief_PP.text() != "" else None,
+                                dialog.idshop_RP.text() if dialog.idshop_RP.text() != "" else None)
+                self.session = self.Session()
+                self.session.add(new_shop)
+                self.session.commit()
+                self.clearShopsFilter()
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
+
+        else:
+            print('Cancelled')
+            dialog.deleteLater()
 
     def editShop(self):
-        # TODO: Написать функцию
-        pass
+        items = self.shops_table.selectedItems()
+        row, res = getRow(items)
+        if (not res) or (row is None):
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            dialog = AddShopDlg(self)
+            dialog.idshop.setText(self.shops_table.item(row, 0).text())
+            dialog.chief_IP.setText(self.shops_table.item(row, 1).text())
+            dialog.chief_RP.setText(self.shops_table.item(row, 2).text())
+            dialog.chief_DP.setText(self.shops_table.item(row, 3).text())
+            dialog.chief_VP.setText(self.shops_table.item(row, 4).text())
+            dialog.chief_TP.setText(self.shops_table.item(row, 5).text())
+            dialog.chief_PP.setText(self.shops_table.item(row, 6).text())
+            dialog.idshop_RP.setText(self.shops_table.item(row, 7).text())
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    self.session = self.Session()
+                    editing_shop = self.session.query(Shop).filter_by(
+                        idshop=self.shops_table.item(row, 0).text()).first()
+                    editing_shop.idshop = dialog.idshop.text() if dialog.idshop.text() != "" else None
+                    editing_shop.chief_IP = dialog.chief_IP.text(
+                    ) if dialog.chief_IP.text() != "" else None
+                    editing_shop.chief_RP = dialog.chief_RP.text(
+                    ) if dialog.chief_RP.text() != "" else None
+                    editing_shop.chief_DP = dialog.chief_DP.text(
+                    ) if dialog.chief_DP.text() != "" else None
+                    editing_shop.chief_VP = dialog.chief_VP.text(
+                    ) if dialog.chief_VP.text() != "" else None
+                    editing_shop.chief_TP = dialog.chief_TP.text(
+                    ) if dialog.chief_TP.text() != "" else None
+                    editing_shop.chief_PP = dialog.chief_PP.text(
+                    ) if dialog.chief_PP.text() != "" else None
+                    editing_shop.idshop_RP = dialog.idshop_RP.text(
+                    ) if dialog.idshop_RP.text() != "" else None
+                    self.session.commit()
+                    self.clearShopsFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+                finally:
+                    self.session.close()
 
     def deleteShop(self):
-        # TODO: Написать функцию
-        pass
+        items = self.shops_table.selectedItems()
+        row, res = getRow(items)
+        if (not res) or (row is None):
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            self.session = self.Session()
+
+            deleting_shop = self.session.query(Shop).filter_by(
+                idshop=self.shops_table.item(row, 0).text()).first()
+            dialog = YesNoDlg(
+                'Shop deleting', f'Are you really want to delete shop:\n{deleting_shop}?')
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    self.session.delete(deleting_shop)
+                    self.session.commit()
+                    self.clearShopsFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+            self.session.close()
 
     def showShopsByFilter(self):
-        # TODO: Написать функцию
-        pass
+        col = self.shopsFilterColumn.currentText()
+        cursor = self.connection.cursor()
+        cursor.execute("CALL FILTER_SHOPS(%s, %s)",
+                       (col, self.shopsFilterValue.text()))
+        data = cursor.fetchall()
+        self.shops_table = createTableFromMYSQLDB(
+            data, self.shops_table_headers, self)
+        self.shops_table.resizeColumnsToContents()
+        self.shops_grid_layout.addWidget(self.shops_table, 1, 0)
+        self.shopsFilterValue.setText('')
+        self.shopsFilterColumn.setCurrentIndex(0)
 
     def clearShopsFilter(self):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_SHOPS()")
         data = cursor.fetchall()
-        # print(data)
-        table = createTableFromMYSQLDB(data, self.shops_table_headers, self)
-        table.resizeColumnsToContents()
-        self.shops_grid_layout.addWidget(table, 1, 0)
+        self.shops_table = createTableFromMYSQLDB(
+            data, self.shops_table_headers, self)
+        self.shops_table.resizeColumnsToContents()
+        self.shops_grid_layout.addWidget(self.shops_table, 1, 0)
         self.shopsFilterValue.setText('')
         self.shopsFilterColumn.setCurrentIndex(0)
 
@@ -671,8 +757,18 @@ class MainWindow(QMainWindow):
         dialog = AddRepairDlg(self)
         if dialog.exec_() == QDialog.Accepted:
             try:
-                pass
-                # TODO: Вызвать хранимую процедуру и передать ей все необходимые параметры
+                new_repair = Repair(dialog.repair_name.text() if dialog.repair_name.text() != "" else None,
+                                    dialog.is_planned.isChecked(),
+                                    dialog.receipt_date.text() if dialog.receipt_date.text() != "" else None,
+                                    dialog.start_date.text() if dialog.start_date.text() != "" else None,
+                                    dialog.finish_date.text() if dialog.finish_date.text() != "" else None,
+                                    dialog.responsible_id.text().split(
+                                        ' ')[0] if dialog.responsible_id.text() != "" else None,
+                                    dialog.equipment_id.text().split(' ')[0] if dialog.equipment_id.text() != "" else None)
+                self.session = self.Session()
+                self.session.add(new_repair)
+                self.session.commit()
+                # TODO: Убедиться, что я могу ввести некорректный id оборудования и БД это сама отловит
                 self.clearRepairsFilter()
             except Exception as err:
                 QMessageBox.critical(None, 'Error!', str(err))

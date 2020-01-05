@@ -347,10 +347,68 @@ class AddMachineDlg(QDialog):
 
 # TODO: Добавить диалог на редактирование оборудования
 
-# TODO: Добавить диалог на создание цеха
 
-# TODO: Добавить диалог на редактирование цеха
+class AddShopDlg(QDialog):
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+        self.parent = parent
+        self.setWindowTitle('Добавить цех')
+        self.layout = QVBoxLayout(self)
 
+        self.hbox_layout = QHBoxLayout()
+
+        self.ok_button = QPushButton('Ok', self)
+        self.ok_button.clicked.connect(self.accept)
+        self.hbox_layout.addWidget(self.ok_button)
+
+        self.cancel_button = QPushButton('Cancel', self)
+        self.cancel_button.clicked.connect(self.reject)
+        self.hbox_layout.addWidget(self.cancel_button)
+
+        self.idshop = QLineEdit(self)
+        self.__createInputField__(
+            'Наименование цеха (Именит. падеж)*', self.idshop)
+
+        self.chief_IP = QLineEdit(self)
+        self.__createInputField__(
+            'Фамилия начальника цеха (Именит. падеж)*', self.chief_IP)
+
+        self.chief_RP = QLineEdit(self)
+        self.__createInputField__(
+            'Фамилия начальника цеха (Родит. падеж)*', self.chief_RP)
+
+        self.chief_DP = QLineEdit(self)
+        self.__createInputField__(
+            'Фамилия начальника цеха (Дат. падеж)*', self.chief_DP)
+
+        self.chief_VP = QLineEdit(self)
+        self.__createInputField__(
+            'Фамилия начальника цеха (Винит. падеж)*', self.chief_VP)
+
+        self.chief_TP = QLineEdit(self)
+        self.__createInputField__(
+            'Фамилия начальника цеха (Творит. падеж)*', self.chief_TP)
+
+        self.chief_PP = QLineEdit(self)
+        self.__createInputField__(
+            'Фамилия начальника цеха (Предл. падеж)*', self.chief_PP)
+
+        self.idshop_RP = QLineEdit(self)
+        self.__createInputField__(
+            'Наименование цеха (Родит. падеж)*', self.idshop_RP)
+
+        self.layout.addLayout(self.hbox_layout)
+
+    def __createLabel__(self, text, alignment=None):
+        label = QLabel(text)
+        label.setFixedSize(230, 20)
+        return label
+
+    def __createInputField__(self, label_text, line_edit):
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__(label_text))
+        tmp_layout.addWidget(line_edit)
+        self.layout.addLayout(tmp_layout)
 # TODO: Добавить диалог на создание станка
 
 # TODO: Добавить диалог на редактирование станка
