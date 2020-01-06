@@ -11,7 +11,7 @@ from additional_modules import *
 from dialogs import *
 
 
-from classes_for_alchemy_orm import Base, Fixation, Repair, Shop, Worker
+from classes_for_alchemy_orm import Base, Fixation, Machine, Repair, Shop, Worker
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
@@ -317,7 +317,6 @@ class MainWindow(QMainWindow):
         cursor.execute("CALL FILTER_WORKERS(%s, %s)",
                        (col, self.workersFilterValue.text()))
         data = cursor.fetchall()
-        # print(data)
         self.workers_table = createTableFromMYSQLDB(
             data, self.workers_table_headers, self)
         self.workers_table.resizeColumnsToContents()
@@ -329,7 +328,6 @@ class MainWindow(QMainWindow):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_WORKERS()")
         data = cursor.fetchall()
-        # print(data)
         self.workers_table = createTableFromMYSQLDB(
             data, self.workers_table_headers, self)
         self.workers_table.resizeColumnsToContents()
@@ -387,11 +385,12 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(filter_group)
         toolbar.addLayout(controlls)
 
-        table = createTableFromMYSQLDB(headers=self.machines_table_headers)
+        self.machines_table = createTableFromMYSQLDB(
+            headers=self.machines_table_headers)
 
         self.machines_grid_layout = QGridLayout()
         self.machines_grid_layout.addLayout(toolbar, 0, 0)
-        self.machines_grid_layout.addWidget(table, 1, 0)
+        self.machines_grid_layout.addWidget(self.machines_table, 1, 0)
         machines_widget.setLayout(self.machines_grid_layout)
         self.clearMachinesFilter()
         return machines_widget
@@ -400,8 +399,25 @@ class MainWindow(QMainWindow):
         dialog = AddMachineDlg(self)
         if dialog.exec_() == QDialog.Accepted:
             try:
-                pass
-                # TODO: Вызвать хранимую процедуру и передать ей все необходимые параметры
+                new_machine = Machine(dialog.model.text() if dialog.model.text() != "" else None,
+                                      dialog.type.text() if dialog.type.text() != "" else None,
+                                      dialog.length.text() if dialog.length.text() != "" else None,
+                                      dialog.width.text() if dialog.width.text() != "" else None,
+                                      dialog.height.text() if dialog.height.text() != "" else None,
+                                      dialog.weight.text() if dialog.weight.text() != "" else None,
+                                      dialog.power.text() if dialog.power.text() != "" else None,
+                                      dialog.detail_length.text() if dialog.detail_length.text() != "" else None,
+                                      dialog.detail_width.text() if dialog.detail_width.text() != "" else None,
+                                      dialog.detail_thickness.text() if dialog.detail_thickness.text() != "" else None,
+                                      dialog.tools.text() if dialog.tools.text() != "" else None,
+                                      dialog.manufacturer.text() if dialog.manufacturer.text() != "" else None,
+                                      dialog.firm.text() if dialog.firm.text() != "" else None,
+                                      dialog.contact.text() if dialog.contact.text() != "" else None,
+                                      dialog.comments.text() if dialog.comments.text() != "" else None)
+                self.session = self.Session()
+                self.session.add(new_machine)
+                self.session.commit()
+
                 self.clearMachinesFilter()
             except Exception as err:
                 QMessageBox.critical(None, 'Error!', str(err))
@@ -411,25 +427,117 @@ class MainWindow(QMainWindow):
             dialog.deleteLater()
 
     def editMachine(self):
-        # TODO: Написать функцию
-        pass
+        items = self.machines_table.selectedItems()
+        row, res = getRow(items)
+        if (not res) or (row is None):
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            dialog = AddMachineDlg(self)
+
+            dialog.model.setText(self.machines_table.item(row, 0).text())
+            dialog.type.setText(self.machines_table.item(row, 1).text())
+            dialog.length.setText(self.machines_table.item(row, 2).text())
+            dialog.width.setText(self.machines_table.item(row, 3).text())
+            dialog.height.setText(self.machines_table.item(row, 4).text())
+            dialog.weight.setText(self.machines_table.item(row, 5).text())
+            dialog.power.setText(self.machines_table.item(row, 6).text())
+            dialog.detail_length.setText(
+                self.machines_table.item(row, 7).text())
+            dialog.detail_width.setText(
+                self.machines_table.item(row, 8).text())
+            dialog.detail_thickness.setText(
+                self.machines_table.item(row, 9).text())
+            dialog.tools.setText(self.machines_table.item(row, 10).text()),
+            dialog.manufacturer.setText(
+                self.machines_table.item(row, 11).text())
+            dialog.firm.setText(self.machines_table.item(row, 12).text())
+            dialog.contact.setText(self.machines_table.item(row, 13).text())
+            dialog.comments.setText(self.machines_table.item(row, 14).text())
+
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    self.session = self.Session()
+                    editing_machine = self.session.query(Machine).filter_by(
+                        model=self.machines_table.item(row, 0).text()).first()
+
+                    editing_machine.model = dialog.model.text() if dialog.model.text() != "" else None
+                    editing_machine.type = dialog.type.text() if dialog.type.text() != "" else None
+                    editing_machine.length = dialog.length.text(
+                    ) if dialog.length.text() != "" else None
+                    editing_machine.width = dialog.width.text() if dialog.width.text() != "" else None
+                    editing_machine.height = dialog.height.text(
+                    ) if dialog.height.text() != "" else None
+                    editing_machine.weight = dialog.weight.text(
+                    ) if dialog.weight.text() != "" else None
+                    editing_machine.power = dialog.power.text() if dialog.power.text() != "" else None
+                    editing_machine.detail_length = dialog.detail_length.text(
+                    ) if dialog.detail_length.text() != "" else None
+                    editing_machine.detail_width = dialog.detail_width.text(
+                    ) if dialog.detail_width.text() != "" else None
+                    editing_machine.detail_thickness = dialog.detail_thickness.text(
+                    ) if dialog.detail_thickness.text() != "" else None
+                    editing_machine.tools = dialog.tools.text() if dialog.tools.text() != "" else None,
+                    editing_machine.manufacturer = dialog.manufacturer.text(
+                    ) if dialog.manufacturer.text() != "" else None
+                    editing_machine.firm = dialog.firm.text() if dialog.firm.text() != "" else None
+                    editing_machine.contact = dialog.contact.text(
+                    ) if dialog.contact.text() != "" else None
+                    editing_machine.comments = dialog.comments.text(
+                    ) if dialog.comments.text() != "" else None
+
+                    self.session.commit()
+                    self.clearMachinesFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+                finally:
+                    self.session.close()
 
     def deleteMachine(self):
-        # TODO: Написать функцию
-        pass
+        items = self.machines_table.selectedItems()
+        row, res = getRow(items)
+        if (not res) or (row is None):
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            self.session = self.Session()
+
+            deleting_machine = self.session.query(Machine).filter_by(
+                model=self.machines_table.item(row, 0).text()).first()
+            dialog = YesNoDlg(
+                'Machine deleting', f'Are you really want to delete machine:\n{deleting_machine}?')
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    self.session.delete(deleting_machine)
+                    self.session.commit()
+                    self.clearMachinesFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+            self.session.close()
 
     def showMachinesByFilter(self):
         col = self.machinesFilterColumn.currentText()
-        QMessageBox.critical(None, self.machinesFilterValue.text(), col)
-        # TODO: Написать и вызвать хранимую процедуру для фильтрации
+        cursor = self.connection.cursor()
+        cursor.execute("CALL FILTER_MACHINES(%s, %s)",
+                       (col, self.machinesFilterValue.text()))
+        data = cursor.fetchall()
+        self.machines_table = createTableFromMYSQLDB(
+            data, self.machines_table_headers, self)
+        self.machines_table.resizeColumnsToContents()
+        self.machines_grid_layout.addWidget(self.machines_table, 1, 0)
+        self.machinesFilterValue.setText('')
+        self.machinesFilterColumn.setCurrentIndex(0)
 
     def clearMachinesFilter(self):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_MACHINES()")
         data = cursor.fetchall()
-        table = createTableFromMYSQLDB(data, self.machines_table_headers, self)
-        table.resizeColumnsToContents()
-        self.machines_grid_layout.addWidget(table, 1, 0)
+        self.machines_table = createTableFromMYSQLDB(
+            data, self.machines_table_headers, self)
+        self.machines_table.resizeColumnsToContents()
+        self.machines_grid_layout.addWidget(self.machines_table, 1, 0)
         self.machinesFilterValue.setText('')
         self.machinesFilterColumn.setCurrentIndex(0)
 
@@ -686,7 +794,6 @@ class MainWindow(QMainWindow):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_EQUIPMENT()")
         data = cursor.fetchall()
-        # print(data)
         table = createTableFromMYSQLDB(
             data, self.equipment_table_headers, self)
         table.resizeColumnsToContents()
@@ -793,7 +900,6 @@ class MainWindow(QMainWindow):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_REPAIRS()")
         data = cursor.fetchall()
-        # print(data)
         table = createTableFromMYSQLDB(
             data, self.repairs_table_headers, self)
         table.resizeColumnsToContents()
@@ -880,7 +986,6 @@ class MainWindow(QMainWindow):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_FIXATIONS()")
         data = cursor.fetchall()
-        # print(data)
         table = createTableFromMYSQLDB(
             data, self.fixations_table_headers, self)
         table.resizeColumnsToContents()
@@ -967,7 +1072,6 @@ class MainWindow(QMainWindow):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_PERFORMERS()")
         data = cursor.fetchall()
-        # print(data)
         table = createTableFromMYSQLDB(
             data, self.performers_table_headers, self)
         table.resizeColumnsToContents()

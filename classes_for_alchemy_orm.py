@@ -77,7 +77,7 @@ class Machine(Base):
         self.comments = comments
 
     def __repr__(self):
-        return "<Machine('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" % self.model, self.eq_type, self.length, self.width, self.height, self.weight, self.power, self.detail_length, self.detail_width, self.detail_thickness, self.tools, self.manufacturer, self.firm, self.contact, self.comments
+        return "<Machine('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" % (self.model, self.eq_type, self.length, self.width, self.height, self.weight, self.power, self.detail_length, self.detail_width, self.detail_thickness, self.tools, self.manufacturer, self.firm, self.contact, self.comments)
 
 
 class Shop(Base):
@@ -123,7 +123,7 @@ class Equipment(Base):
         self.comments = comments
 
     def __repr__(self):
-        return "<Equipment('%s','%s','%s','%s','%s','%s')" % self.model, self.creation_year, self.serial_number, self.placement, self.start_using_date, self.comments
+        return "<Equipment('%s','%s','%s','%s','%s','%s')" % (self.model, self.creation_year, self.serial_number, self.placement, self.start_using_date, self.comments)
 
 
 class Repair(Base):
@@ -173,4 +173,4 @@ class Performer(Base):
         self.worker_id = worker_id
 
     def __repr__(self):
-        return "<Performer('%s','%s')" % self.repair_id, self.worker_id
+        return "<Performer('%s','%s')" % (self.repair_id, self.worker_id)

@@ -345,8 +345,6 @@ class AddMachineDlg(QDialog):
         tmp_layout.addWidget(line_edit)
         self.layout.addLayout(tmp_layout)
 
-# TODO: Добавить диалог на редактирование оборудования
-
 
 class AddShopDlg(QDialog):
     def __init__(self, parent=None):
@@ -409,6 +407,7 @@ class AddShopDlg(QDialog):
         tmp_layout.addWidget(self.__createLabel__(label_text))
         tmp_layout.addWidget(line_edit)
         self.layout.addLayout(tmp_layout)
+
 # TODO: Добавить диалог на создание станка
 
 # TODO: Добавить диалог на редактирование станка
