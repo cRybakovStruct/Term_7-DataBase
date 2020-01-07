@@ -4,6 +4,7 @@ from additional_modules import createTableFromMYSQLDB, getRow
 
 HEADERS_FOR_WORKER_SELECTION = ['idworker', 'surname', 'name', 'fathername']
 HEADERS_FOR_EQUIPMENT_SELECTION = ['serial_number', 'model', 'placement']
+HEADERS_FOR_MACHINE_SELECTION = ['model', 'eq_type', 'firm']
 BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH = 25
 
 
@@ -408,9 +409,93 @@ class AddShopDlg(QDialog):
         tmp_layout.addWidget(line_edit)
         self.layout.addLayout(tmp_layout)
 
-# TODO: Добавить диалог на создание станка
 
-# TODO: Добавить диалог на редактирование станка
+class AddEquipmentDlg(QDialog):
+    def __init__(self, shops=None, parent=None):
+        QDialog.__init__(self, parent)
+        self.parent = parent
+        self.setWindowTitle('Добавить станок')
+        self.shops = shops
+        self.layout = QVBoxLayout(self)
+
+        self.hbox_layout = QHBoxLayout()
+        self.ok_button = QPushButton('Ok', self)
+        self.ok_button.clicked.connect(self.accept)
+        self.hbox_layout.addWidget(self.ok_button)
+        self.cancel_button = QPushButton('Cancel', self)
+        self.cancel_button.clicked.connect(self.reject)
+        self.hbox_layout.addWidget(self.cancel_button)
+
+        self.model = QLineEdit(self)
+        self.model_btn = QPushButton('•••', self)
+        self.model_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.model_btn.clicked.connect(lambda: self.add_machine_id())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__('Модель*'))
+        tmp_layout.addWidget(self.model)
+        tmp_layout.addWidget(self.model_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.creation_year = QLineEdit(self)
+        self.__createInputField__('Год выпуска*', self.creation_year)
+
+        self.serial_number = QLineEdit(self)
+        self.__createInputField__('Серийный номер*', self.serial_number)
+
+        self.placement = QComboBox(self)
+        self.placement.addItems(self.shops)
+        self.__createInputField__('Расположение*', self.placement)
+
+        self.start_using_date = QLineEdit(self)
+        self.start_using_date_btn = QPushButton('•••', self)
+        self.start_using_date_btn.setFixedWidth(
+            BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.start_using_date_btn.clicked.connect(
+            lambda: self.addStartUsingDate())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__('Дата ввода в эксплуатацию'))
+        tmp_layout.addWidget(self.start_using_date)
+        tmp_layout.addWidget(self.start_using_date_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.comments = QLineEdit(self)
+        self.__createInputField__('Комментарии', self.comments)
+
+        self.layout.addLayout(self.hbox_layout)
+
+    # Qt.AlignVCenter | Qt.AlignRight):
+    def __createLabel__(self, text, alignment=None):
+        label = QLabel(text)
+        label.setFixedSize(150, 20)
+        # label.setAlignment(alignment)
+        return label
+
+    def __createInputField__(self, label_text, line_edit):
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__(label_text))
+        tmp_layout.addWidget(line_edit)
+        self.layout.addLayout(tmp_layout)
+
+    def addStartUsingDate(self):
+        dialog = GetDateDlg(self)
+        if dialog.exec_() == QDialog.Accepted:
+            tmp = dialog.date.selectedDate().toString("yyyy.MM.dd")
+            self.start_using_date.setText(str(tmp))
+
+    def add_machine_id(self):
+        dialog = SelectMachineDlg(self.parent)
+        if dialog.exec_() == QDialog.Accepted:
+            try:
+                items = dialog.table.selectedItems()
+                row, res = getRow(items)
+                if (not res) or (row is None):
+                    QMessageBox.critical(
+                        None, 'Warning!', 'Please, select cells in single row')
+                    return
+                else:
+                    self.model.setText(dialog.table.item(row, 0).text())
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
 
 
 class AddRepairDlg(QDialog):
@@ -623,6 +708,33 @@ class SelectEquipmentDlg(QDialog):
 
         self.table = createTableFromMYSQLDB(
             data, HEADERS_FOR_EQUIPMENT_SELECTION, self)
+        self.table.resizeColumnsToContents()
+        self.layout.addWidget(self.table)
+
+        self.hbox_layout = QHBoxLayout()
+        self.ok_button = QPushButton('Ок', self)
+        self.ok_button.clicked.connect(self.accept)
+        self.hbox_layout.addWidget(self.ok_button)
+        self.cancel_button = QPushButton('Отмена', self)
+        self.cancel_button.clicked.connect(self.reject)
+        self.hbox_layout.addWidget(self.cancel_button)
+
+        self.layout.addLayout(self.hbox_layout)
+
+
+class SelectMachineDlg(QDialog):
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+
+        self.setWindowTitle('Выберите станок')
+        self.layout = QVBoxLayout(self)
+
+        cursor = parent.connection.cursor()
+        cursor.execute("CALL GET_MACHINE_FOR_SELECTION()")
+        data = cursor.fetchall()
+
+        self.table = createTableFromMYSQLDB(
+            data, HEADERS_FOR_MACHINE_SELECTION, self)
         self.table.resizeColumnsToContents()
         self.layout.addWidget(self.table)
 

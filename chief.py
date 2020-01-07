@@ -11,7 +11,7 @@ from additional_modules import *
 from dialogs import *
 
 
-from classes_for_alchemy_orm import Base, Fixation, Machine, Repair, Shop, Worker
+from classes_for_alchemy_orm import Base, Fixation, Machine, Repair, Shop, Worker, Equipment
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
@@ -64,9 +64,9 @@ class MainWindow(QMainWindow):
                                     'chief_PP',
                                     'idshop_RP']
 
-        self.equipment_table_headers = ['idequipment',
-                                        'model',
+        self.equipment_table_headers = ['model',
                                         'creation_year',
+                                        'serial_number',
                                         'placement',
                                         'start_using_date',
                                         'comments']
@@ -765,39 +765,142 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(filter_group)
         toolbar.addLayout(controlls)
 
-        table = createTableFromMYSQLDB(headers=self.equipment_table_headers)
+        self.equipment_table = createTableFromMYSQLDB(
+            headers=self.equipment_table_headers)
 
         self.equipment_grid_layout = QGridLayout()
         self.equipment_grid_layout.addLayout(toolbar, 0, 0)
-        self.equipment_grid_layout.addWidget(table, 1, 0)
+        self.equipment_grid_layout.addWidget(self.equipment_table, 1, 0)
         equipment_widget.setLayout(self.equipment_grid_layout)
         self.clearEquipmentFilter()
         return equipment_widget
 
     def addEquipment(self):
-        # TODO: Написать функцию
-        pass
+        cursor = self.connection.cursor()
+        cursor.execute("CALL GET_SHOPS_IDS()")
+        data = cursor.fetchall()
+        shops_id = [None]
+        for value in list(data):
+            shops_id.append(str(value[0]))
+        dialog = AddEquipmentDlg(shops_id, self)
+        if dialog.exec_() == QDialog.Accepted:
+            try:
+                new_equipment = Equipment(dialog.model.text() if dialog.model.text() != "" else None,
+                                          dialog.creation_year.text() if dialog.creation_year.text() != "" else None,
+                                          dialog.serial_number.text() if dialog.serial_number.text() != "" else None,
+                                          dialog.placement.currentText() if dialog.placement.currentText() != "" else None,
+                                          dialog.start_using_date.text() if dialog.start_using_date.text() != "" else None,
+                                          dialog.comments.text() if dialog.comments.text() != "" else None)
+                self.session = self.Session()
+                self.session.add(new_equipment)
+                self.session.commit()
+
+                self.clearEquipmentFilter()
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
+            finally:
+                self.session.close()
+
+        else:
+            print('Cancelled')
+            dialog.deleteLater()
 
     def editEquipment(self):
-        # TODO: Написать функцию
-        pass
+        items = self.equipment_table.selectedItems()
+        row, res = getRow(items)
+        if (not res) or (row is None):
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            cursor = self.connection.cursor()
+            cursor.execute("CALL GET_SHOPS_IDS()")
+            data = cursor.fetchall()
+            shops_id = [None]
+            for value in list(data):
+                shops_id.append(str(value[0]))
+
+            dialog = AddEquipmentDlg(shops_id, self)
+            dialog.model.setText(self.equipment_table.item(row, 0).text())
+            dialog.creation_year.setText(
+                self.equipment_table.item(row, 1).text())
+            dialog.serial_number.setText(
+                self.equipment_table.item(row, 2).text())
+            dialog.placement.setCurrentText(self.equipment_table.item(row, 3).text())
+            dialog.start_using_date.setText(
+                self.equipment_table.item(row, 4).text())
+            dialog.comments.setText(self.equipment_table.item(row, 5).text())
+
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    self.session = self.Session()
+                    editing_equipment = self.session.query(Equipment).filter_by(
+                        serial_number=self.equipment_table.item(row, 2).text()).first()
+
+                    editing_equipment.model = dialog.model.text(
+                    ) if dialog.model.text() != "" else None
+                    editing_equipment.creation_year = dialog.creation_year.text(
+                    ) if dialog.creation_year.text() != "" else None
+                    editing_equipment.serial_number = dialog.serial_number.text(
+                    ) if dialog.serial_number.text() != "" else None
+                    editing_equipment.placement = dialog.placement.currentText(
+                    ) if dialog.placement.currentText() != "" else None
+                    editing_equipment.start_using_date = dialog.start_using_date.text(
+                    ) if dialog.start_using_date.text() != "" else None
+                    editing_equipment.comments = dialog.comments.text(
+                    ) if dialog.comments.text() != "" else None
+
+                    self.session.commit()
+                    self.clearEquipmentFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+                finally:
+                    self.session.close()
 
     def deleteEquipment(self):
-        # TODO: Написать функцию
-        pass
+        items = self.equipment_table.selectedItems()
+        row, res = getRow(items)
+        if (not res) or (row is None):
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            self.session = self.Session()
+
+            deleting_equipment = self.session.query(Equipment).filter_by(
+                serial_number=self.equipment_table.item(row, 2).text()).first()
+            dialog = YesNoDlg(
+                'Equipment deleting', f'Are you really want to delete equipment:\n{deleting_equipment}?')
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    self.session.delete(deleting_equipment)
+                    self.session.commit()
+                    self.clearEquipmentFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+            self.session.close()
 
     def showEquipmentByFilter(self):
-        # TODO: Написать функцию
-        pass
+        col = self.equipmentFilterColumn.currentText()
+        cursor = self.connection.cursor()
+        cursor.execute("CALL FILTER_EQUIPMENT(%s, %s)",
+                       (col, self.equipmentFilterValue.text()))
+        data = cursor.fetchall()
+        self.equipment_table = createTableFromMYSQLDB(
+            data, self.equipment_table_headers, self)
+        self.equipment_table.resizeColumnsToContents()
+        self.equipment_grid_layout.addWidget(self.equipment_table, 1, 0)
+        self.equipmentFilterValue.setText('')
+        self.equipmentFilterColumn.setCurrentIndex(0)
 
     def clearEquipmentFilter(self):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_EQUIPMENT()")
         data = cursor.fetchall()
-        table = createTableFromMYSQLDB(
+        self.equipment_table = createTableFromMYSQLDB(
             data, self.equipment_table_headers, self)
-        table.resizeColumnsToContents()
-        self.equipment_grid_layout.addWidget(table, 1, 0)
+        self.equipment_table.resizeColumnsToContents()
+        self.equipment_grid_layout.addWidget(self.equipment_table, 1, 0)
         self.equipmentFilterValue.setText('')
         self.equipmentFilterColumn.setCurrentIndex(0)
 

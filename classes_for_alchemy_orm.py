@@ -108,7 +108,7 @@ class Shop(Base):
 class Equipment(Base):
     __tablename__ = 'equipment'
     model = Column(String)
-    creation_year = Column(Date)
+    creation_year = Column(Integer)
     serial_number = Column(Integer, primary_key=True)
     placement = Column(String)
     start_using_date = Column(Date)
