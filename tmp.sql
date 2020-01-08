@@ -293,4 +293,57 @@ WHERE
 
 END IF;
 
+END;
+
+-- Фильтрация закреплений
+BEGIN IF field_var = 'worker' THEN
+SELECT
+  fixations.worker,
+  workers.surname,
+  workers.name,
+  fixations.shop
+from
+  fixations
+  LEFT JOIN workers ON fixations.worker = workers.idworker
+WHERE
+  worker = CONVERT(value_var, INTEGER);
+
+ELSEIF field_var = 'surname' THEN
+SELECT
+  fixations.worker,
+  workers.surname,
+  workers.name,
+  fixations.shop
+from
+  fixations
+  LEFT JOIN workers ON fixations.worker = workers.idworker
+WHERE
+  workers.surname = CONVERT(value_var, VARCHAR(45));
+
+ELSEIF field_var = 'name' THEN
+SELECT
+  fixations.worker,
+  workers.surname,
+  workers.name,
+  fixations.shop
+from
+  fixations
+  LEFT JOIN workers ON fixations.worker = workers.idworker
+WHERE
+  workers.name = CONVERT(value_var, VARCHAR(45));
+
+ELSEIF field_var = 'shop' THEN
+SELECT
+  fixations.worker,
+  workers.surname,
+  workers.name,
+  fixations.shop
+from
+  fixations
+  LEFT JOIN workers ON fixations.worker = workers.idworker
+WHERE
+  fixations.shop = CONVERT(value_var, VARCHAR(45));
+
+END IF;
+
 END

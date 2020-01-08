@@ -1112,10 +1112,10 @@ class MainWindow(QMainWindow):
         addFixationBtn.clicked.connect(lambda: self.addFixation())
         controlls.addWidget(addFixationBtn)
 
-        editFixationBtn = QPushButton('Edit fixation', self)
-        editFixationBtn.setFixedWidth(BUTTON_WIDTH)
-        editFixationBtn.clicked.connect(lambda: self.editFixation())
-        controlls.addWidget(editFixationBtn)
+        # editFixationBtn = QPushButton('Edit fixation', self)
+        # editFixationBtn.setFixedWidth(BUTTON_WIDTH)
+        # editFixationBtn.clicked.connect(lambda: self.editFixation())
+        # controlls.addWidget(editFixationBtn)
 
         delFixationBtn = QPushButton('Delete fixation', self)
         delFixationBtn.setFixedWidth(BUTTON_WIDTH)
@@ -1132,39 +1132,89 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(filter_group)
         toolbar.addLayout(controlls)
 
-        table = createTableFromMYSQLDB(headers=self.fixations_table_headers)
+        self.fixations_table = createTableFromMYSQLDB(
+            headers=self.fixations_table_headers)
 
         self.fixations_grid_layout = QGridLayout()
         self.fixations_grid_layout.addLayout(toolbar, 0, 0)
-        self.fixations_grid_layout.addWidget(table, 1, 0)
+        self.fixations_grid_layout.addWidget(self.fixations_table, 1, 0)
         fixations_widget.setLayout(self.fixations_grid_layout)
         self.clearFixationsFilter()
         return fixations_widget
 
     def addFixation(self):
-        # TODO: Написать функцию
-        pass
+        cursor = self.connection.cursor()
+        cursor.execute("CALL GET_SHOPS_IDS()")
+        data = cursor.fetchall()
+        shops_id = []
+        for value in list(data):
+            shops_id.append(str(value[0]))
+        dialog = AddFixationDlg(shops_id, self)
+        if dialog.exec_() == QDialog.Accepted:
+            try:
+                new_fixation = Fixation(
+                    dialog.worker_id.text().split(' ')[0], dialog.shop.currentText())
+                self.session = self.Session()
+                self.session.add(new_fixation)
+                self.session.commit()
 
-    def editFixation(self):
-        # TODO: Написать функцию
-        pass
+                self.clearFixationsFilter()
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
+            finally:
+                self.session.close()
+
+        else:
+            print('Cancelled')
+            dialog.deleteLater()
+
+    # def editFixation(self):
+    #     pass
 
     def deleteFixation(self):
-        # TODO: Написать функцию
-        pass
+        items = self.fixations_table.selectedItems()
+        row, res = getRow(items)
+        if (not res) or (row is None):
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            self.session = self.Session()
+
+            deleting_fixation = self.session.query(Fixation).filter_by(
+                worker=self.fixations_table.item(row, 0).text(), shop=self.fixations_table.item(row, 3).text()).first()
+            dialog = YesNoDlg(
+                'Fixation deleting', f'Are you really want to delete fixation:\n{deleting_fixation}?')
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    self.session.delete(deleting_fixation)
+                    self.session.commit()
+                    self.clearFixationsFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+            self.session.close()
 
     def showFixationsByFilter(self):
-        # TODO: Написать функцию
-        pass
+        col = self.fixationsFilterColumn.currentText()
+        cursor = self.connection.cursor()
+        cursor.execute("CALL FILTER_FIXATIONS(%s, %s)",
+                       (col, self.fixationsFilterValue.text()))
+        data = cursor.fetchall()
+        self.fixations_table = createTableFromMYSQLDB(
+            data, self.fixations_table_headers, self)
+        self.fixations_table.resizeColumnsToContents()
+        self.fixations_grid_layout.addWidget(self.fixations_table, 1, 0)
+        self.fixationsFilterValue.setText('')
+        self.fixationsFilterColumn.setCurrentIndex(0)
 
     def clearFixationsFilter(self):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_FIXATIONS()")
         data = cursor.fetchall()
-        table = createTableFromMYSQLDB(
+        self.fixations_table = createTableFromMYSQLDB(
             data, self.fixations_table_headers, self)
-        table.resizeColumnsToContents()
-        self.fixations_grid_layout.addWidget(table, 1, 0)
+        self.fixations_table.resizeColumnsToContents()
+        self.fixations_grid_layout.addWidget(self.fixations_table, 1, 0)
         self.fixationsFilterValue.setText('')
         self.fixationsFilterColumn.setCurrentIndex(0)
 
@@ -1198,10 +1248,10 @@ class MainWindow(QMainWindow):
         addPerformerBtn.clicked.connect(lambda: self.addPerformer())
         controlls.addWidget(addPerformerBtn)
 
-        editPerformerBtn = QPushButton('Edit performer', self)
-        editPerformerBtn.setFixedWidth(BUTTON_WIDTH)
-        editPerformerBtn.clicked.connect(lambda: self.editPerformer())
-        controlls.addWidget(editPerformerBtn)
+        # editPerformerBtn = QPushButton('Edit performer', self)
+        # editPerformerBtn.setFixedWidth(BUTTON_WIDTH)
+        # editPerformerBtn.clicked.connect(lambda: self.editPerformer())
+        # controlls.addWidget(editPerformerBtn)
 
         delPerformerBtn = QPushButton('Delete performer', self)
         delPerformerBtn.setFixedWidth(BUTTON_WIDTH)
@@ -1218,11 +1268,12 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(filter_group)
         toolbar.addLayout(controlls)
 
-        table = createTableFromMYSQLDB(headers=self.performers_table_headers)
+        self.performers_table = createTableFromMYSQLDB(
+            headers=self.performers_table_headers)
 
         self.performers_grid_layout = QGridLayout()
         self.performers_grid_layout.addLayout(toolbar, 0, 0)
-        self.performers_grid_layout.addWidget(table, 1, 0)
+        self.performers_grid_layout.addWidget(self.performers_table, 1, 0)
         performers_widget.setLayout(self.performers_grid_layout)
         self.clearPerformersFilter()
         return performers_widget
@@ -1231,9 +1282,8 @@ class MainWindow(QMainWindow):
         # TODO: Написать функцию
         pass
 
-    def editPerformer(self):
-        # TODO: Написать функцию
-        pass
+    # def editPerformer(self):
+    #     pass
 
     def deletePerformer(self):
         # TODO: Написать функцию
@@ -1247,10 +1297,10 @@ class MainWindow(QMainWindow):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_PERFORMERS()")
         data = cursor.fetchall()
-        table = createTableFromMYSQLDB(
+        self.performers_table = createTableFromMYSQLDB(
             data, self.performers_table_headers, self)
-        table.resizeColumnsToContents()
-        self.performers_grid_layout.addWidget(table, 1, 0)
+        self.performers_table.resizeColumnsToContents()
+        self.performers_grid_layout.addWidget(self.performers_table, 1, 0)
         self.performersFilterValue.setText('')
         self.performersFilterColumn.setCurrentIndex(0)
 
