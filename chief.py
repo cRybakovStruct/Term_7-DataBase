@@ -11,7 +11,7 @@ from additional_modules import *
 from dialogs import *
 
 
-from classes_for_alchemy_orm import Base, Fixation, Machine, Repair, Shop, Worker, Equipment
+from classes_for_alchemy_orm import Base, Fixation, Machine, Repair, Shop, Worker, Equipment, Performer
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
@@ -90,6 +90,8 @@ class MainWindow(QMainWindow):
                                         'shop']
 
         self.performers_table_headers = ['repair_id',
+                                         'repair_name',
+                                         'model',
                                          'worker_id',
                                          'surname',
                                          'name']
@@ -219,6 +221,7 @@ class MainWindow(QMainWindow):
                     print(new_fixation)
                     self.session.add(new_fixation)
                     self.session.commit()
+                    self.clearFixationsFilter()
 
                 self.clearWorkersFilter()
             except Exception as err:
@@ -307,6 +310,7 @@ class MainWindow(QMainWindow):
                     self.session.delete(deleting_worker)
                     self.session.commit()
                     self.clearWorkersFilter()
+                    self.clearFixationsFilter()
                 except Exception as err:
                     QMessageBox.critical(None, 'Error!', str(err))
             self.session.close()
@@ -1279,19 +1283,63 @@ class MainWindow(QMainWindow):
         return performers_widget
 
     def addPerformer(self):
-        # TODO: Написать функцию
-        pass
+        dialog = AddPerformerDlg(self)
+        if dialog.exec_() == QDialog.Accepted:
+            try:
+                new_performer = Performer(
+                    dialog.repair.text().split(' ')[0], dialog.worker_id.text().split(' ')[0])
+                self.session = self.Session()
+                self.session.add(new_performer)
+                self.session.commit()
+
+                self.clearPerformersFilter()
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
+            finally:
+                self.session.close()
+
+        else:
+            print('Cancelled')
+            dialog.deleteLater()
 
     # def editPerformer(self):
     #     pass
 
     def deletePerformer(self):
-        # TODO: Написать функцию
-        pass
+        items = self.performers_table.selectedItems()
+        row, res = getRow(items)
+        if (not res) or (row is None):
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            self.session = self.Session()
+
+            deleting_performer = self.session.query(Performer).filter_by(
+                repair_id=self.performers_table.item(row, 0).text(), worker_id=self.performers_table.item(row, 3).text()).first()
+            dialog = YesNoDlg(
+                'Performer deleting', f'Are you really want to delete performer:\n{deleting_performer}?')
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    self.session.delete(deleting_performer)
+                    self.session.commit()
+                    self.clearPerformersFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+            self.session.close()
 
     def showPerformersByFilter(self):
-        # TODO: Написать функцию
-        pass
+        col = self.performersFilterColumn.currentText()
+        cursor = self.connection.cursor()
+        cursor.execute("CALL FILTER_PERFORMERS(%s, %s)",
+                       (col, self.performersFilterValue.text()))
+        data = cursor.fetchall()
+        self.performers_table = createTableFromMYSQLDB(
+            data, self.performers_table_headers, self)
+        self.performers_table.resizeColumnsToContents()
+        self.performers_grid_layout.addWidget(self.performers_table, 1, 0)
+        self.performersFilterValue.setText('')
+        self.performersFilterColumn.setCurrentIndex(0)
 
     def clearPerformersFilter(self):
         cursor = self.connection.cursor()
@@ -1309,42 +1357,42 @@ class MainWindow(QMainWindow):
     def getConnection(self):
 
         # TODO: Инвертировать комментарии перед сдачей
-        try:
-            connection = MySQLdb.connect(host="localhost",
-                                         user='root',
-                                         passwd='',
-                                         db="rmc",
-                                         charset='utf8')
-            engine = create_engine(
-                f"mysql://root:{''}@localhost:3306/rmc?charset=utf8", echo=False)
-            return (connection, engine)
-        except Exception as err:
-            QMessageBox.critical(None, 'Error!', str(err))
-            return (None, None)
+        # try:
+        #     connection = MySQLdb.connect(host="localhost",
+        #                                  user='root',
+        #                                  passwd='',
+        #                                  db="rmc",
+        #                                  charset='utf8')
+        #     engine = create_engine(
+        #         f"mysql://root:{''}@localhost:3306/rmc?charset=utf8", echo=False)
+        #     return (connection, engine)
+        # except Exception as err:
+        #     QMessageBox.critical(None, 'Error!', str(err))
+        #     return (None, None)
 
-        # dialog = AuthorizationDlg(self)
-        # if dialog.exec_() == QDialog.Accepted:
-        #     print('Login: %s' % dialog.login.text())
-        #     print('Password: %s' % dialog.passwd.text())
-        #     connection = None
-        #     engine = None
-        #     try:
-        #         connection = MySQLdb.connect(host="localhost",
-        #                                      user=dialog.login.text(),
-        #                                      passwd=dialog.passwd.text(),
-        #                                      db="rmc",
-        #                                      charset='utf8')
-        #         engine = create_engine(
-        #             f"mysql://{dialog.login.text()}:{dialog.passwd.text()}@localhost:3306/rmc?charset=utf8", echo=False)
-        #         return (connection, engine)
-        #     except Exception as err:
-        #         QMessageBox.critical(None, 'Error!', str(err))
-        #         return (None, None)
+        dialog = AuthorizationDlg(self)
+        if dialog.exec_() == QDialog.Accepted:
+            print('Login: %s' % dialog.login.text())
+            print('Password: %s' % dialog.passwd.text())
+            connection = None
+            engine = None
+            try:
+                connection = MySQLdb.connect(host="localhost",
+                                             user=dialog.login.text(),
+                                             passwd=dialog.passwd.text(),
+                                             db="rmc",
+                                             charset='utf8')
+                engine = create_engine(
+                    f"mysql://{dialog.login.text()}:{dialog.passwd.text()}@localhost:3306/rmc?charset=utf8", echo=False)
+                return (connection, engine)
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
+                return (None, None)
 
-        # else:
-        #     print('Cancelled')
-        #     dialog.deleteLater()
-        #     raise NoneConnectionError
+        else:
+            print('Cancelled')
+            dialog.deleteLater()
+            raise NoneConnectionError
 
 
 if __name__ == "__main__":

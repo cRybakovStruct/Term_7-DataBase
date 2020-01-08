@@ -346,4 +346,27 @@ WHERE
 
 END IF;
 
-END
+END;
+
+CREATE PROCEDURE `GET_REPAIRS_FOR_SELECTION`() NOT DETERMINISTIC NO SQL SQL SECURITY INVOKER BEGIN
+SELECT
+  idrepair,
+  repair_name,
+  equipment_id
+FROM
+  repairs;
+
+END;
+
+SELECT
+  performers.repair_id,
+  repairs.repair_name,
+  equipment.model,
+  performers.worker_id,
+  workers.surname,
+  workers.name
+from
+  performers
+  LEFT JOIN workers ON performers.worker_id = workers.idworker
+  LEFT JOIN repairs ON performers.repair_id = repairs.idrepair
+  LEFT JOIN equipment ON repairs.equipment_id = equipment.serial_number;

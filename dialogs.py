@@ -5,6 +5,7 @@ from additional_modules import createTableFromMYSQLDB, getRow
 HEADERS_FOR_WORKER_SELECTION = ['idworker', 'surname', 'name', 'fathername']
 HEADERS_FOR_EQUIPMENT_SELECTION = ['serial_number', 'model', 'placement']
 HEADERS_FOR_MACHINE_SELECTION = ['model', 'eq_type', 'firm']
+HEADERS_FOR_REPAIR_SELECTION = ['idrepair', 'repair_name', 'equipment_id']
 BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH = 25
 
 
@@ -636,8 +637,6 @@ class AddRepairDlg(QDialog):
             except Exception as err:
                 QMessageBox.critical(None, 'Error!', str(err))
 
-# TODO: Добавить диалог на создание закрепления
-
 
 class AddFixationDlg(QDialog):
     def __init__(self, shops=None, parent=None):
@@ -701,7 +700,89 @@ class AddFixationDlg(QDialog):
             except Exception as err:
                 QMessageBox.critical(None, 'Error!', str(err))
 
-# TODO: Добавить диалог на создание исполнителя
+
+class AddPerformerDlg(QDialog):
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+        self.setWindowTitle('Добавить исполнителя')
+        self.parent = parent
+        self.layout = QVBoxLayout(self)
+
+        self.hbox_layout = QHBoxLayout()
+        self.ok_button = QPushButton('Ok', self)
+        self.ok_button.clicked.connect(self.accept)
+        self.hbox_layout.addWidget(self.ok_button)
+        self.cancel_button = QPushButton('Cancel', self)
+        self.cancel_button.clicked.connect(self.reject)
+        self.hbox_layout.addWidget(self.cancel_button)
+
+        self.worker_id = QLineEdit(self)
+        self.worker_btn = QPushButton('•••', self)
+        self.worker_btn.setFixedWidth(
+            BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.worker_btn.clicked.connect(lambda: self.add_worker_id())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__('Сотрудник*'))
+        tmp_layout.addWidget(self.worker_id)
+        tmp_layout.addWidget(self.worker_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.repair = QLineEdit(self)
+        self.repair_btn = QPushButton('•••', self)
+        self.repair_btn.setFixedWidth(BUTTON_FOR_ADDITIONAL_SELECTION_WIDTH)
+        self.repair_btn.clicked.connect(lambda: self.add_repair_id())
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__('Ремонт*'))
+        tmp_layout.addWidget(self.repair)
+        tmp_layout.addWidget(self.repair_btn)
+        self.layout.addLayout(tmp_layout)
+
+        self.layout.addLayout(self.hbox_layout)
+
+    # Qt.AlignVCenter | Qt.AlignRight):
+    def __createLabel__(self, text, alignment=None):
+        label = QLabel(text)
+        label.setFixedSize(150, 20)
+        # label.setAlignment(alignment)
+        return label
+
+    def __createInputField__(self, label_text, line_edit):
+        tmp_layout = QHBoxLayout(self)
+        tmp_layout.addWidget(self.__createLabel__(label_text))
+        tmp_layout.addWidget(line_edit)
+        self.layout.addLayout(tmp_layout)
+
+    def add_worker_id(self):
+        dialog = SelectWorkerDlg(self.parent)
+        if dialog.exec_() == QDialog.Accepted:
+            try:
+                items = dialog.table.selectedItems()
+                row, res = getRow(items)
+                if (not res) or (row is None):
+                    QMessageBox.critical(
+                        None, 'Warning!', 'Please, select cells in single row')
+                    return
+                else:
+                    self.worker_id.setText(
+                        f'{dialog.table.item(row, 0).text()} {dialog.table.item(row, 1).text()} {dialog.table.item(row, 2).text()}')
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
+
+    def add_repair_id(self):
+        dialog = SelectRepairDlg(self.parent)
+        if dialog.exec_() == QDialog.Accepted:
+            try:
+                items = dialog.table.selectedItems()
+                row, res = getRow(items)
+                if (not res) or (row is None):
+                    QMessageBox.critical(
+                        None, 'Warning!', 'Please, select cells in single row')
+                    return
+                else:
+                    self.repair.setText(
+                        f'{dialog.table.item(row, 0).text()} {dialog.table.item(row, 1).text()} {dialog.table.item(row, 2).text()}')
+            except Exception as err:
+                QMessageBox.critical(None, 'Error!', str(err))
 
 
 class YesNoDlg(QDialog):
@@ -792,6 +873,33 @@ class SelectMachineDlg(QDialog):
 
         self.table = createTableFromMYSQLDB(
             data, HEADERS_FOR_MACHINE_SELECTION, self)
+        self.table.resizeColumnsToContents()
+        self.layout.addWidget(self.table)
+
+        self.hbox_layout = QHBoxLayout()
+        self.ok_button = QPushButton('Ок', self)
+        self.ok_button.clicked.connect(self.accept)
+        self.hbox_layout.addWidget(self.ok_button)
+        self.cancel_button = QPushButton('Отмена', self)
+        self.cancel_button.clicked.connect(self.reject)
+        self.hbox_layout.addWidget(self.cancel_button)
+
+        self.layout.addLayout(self.hbox_layout)
+
+
+class SelectRepairDlg(QDialog):
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+
+        self.setWindowTitle('Выберите ремонт')
+        self.layout = QVBoxLayout(self)
+
+        cursor = parent.connection.cursor()
+        cursor.execute("CALL GET_REPAIRS_FOR_SELECTION()")
+        data = cursor.fetchall()
+
+        self.table = createTableFromMYSQLDB(
+            data, HEADERS_FOR_REPAIR_SELECTION, self)
         self.table.resizeColumnsToContents()
         self.layout.addWidget(self.table)
 
