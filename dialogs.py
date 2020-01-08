@@ -616,7 +616,7 @@ class AddRepairDlg(QDialog):
                     return
                 else:
                     self.responsible_id.setText(
-                        f'{dialog.table.item(row, 0).text()} {dialog.table.item(row, 1).text()} {dialog.table.item(row, 2).text()} {dialog.table.item(row, 3).text()}')
+                        f'{dialog.table.item(row, 0).text()} {dialog.table.item(row, 1).text()} {dialog.table.item(row, 2).text()}')
             except Exception as err:
                 QMessageBox.critical(None, 'Error!', str(err))
 
@@ -635,8 +635,6 @@ class AddRepairDlg(QDialog):
                         f'{dialog.table.item(row, 0).text()} {dialog.table.item(row, 1).text()} {dialog.table.item(row, 2).text()}')
             except Exception as err:
                 QMessageBox.critical(None, 'Error!', str(err))
-
-# TODO: Добавить диалог на редактирование ремонта
 
 # TODO: Добавить диалог на создание закрепления
 

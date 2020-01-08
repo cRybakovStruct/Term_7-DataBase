@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
                                       'responsible_id',
                                       'surname',
                                       'name',
-                                      'equipment_id'
+                                      'equipment_id',
                                       'model',
                                       'placement']
 
@@ -826,7 +826,8 @@ class MainWindow(QMainWindow):
                 self.equipment_table.item(row, 1).text())
             dialog.serial_number.setText(
                 self.equipment_table.item(row, 2).text())
-            dialog.placement.setCurrentText(self.equipment_table.item(row, 3).text())
+            dialog.placement.setCurrentText(
+                self.equipment_table.item(row, 3).text())
             dialog.start_using_date.setText(
                 self.equipment_table.item(row, 4).text())
             dialog.comments.setText(self.equipment_table.item(row, 5).text())
@@ -954,11 +955,12 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(filter_group)
         toolbar.addLayout(controlls)
 
-        table = createTableFromMYSQLDB(headers=self.equipment_table_headers)
+        self.repairs_table = createTableFromMYSQLDB(
+            headers=self.equipment_table_headers)
 
         self.repairs_grid_layout = QGridLayout()
         self.repairs_grid_layout.addLayout(toolbar, 0, 0)
-        self.repairs_grid_layout.addWidget(table, 1, 0)
+        self.repairs_grid_layout.addWidget(self.repairs_table, 1, 0)
         repairs_widget.setLayout(self.repairs_grid_layout)
         self.clearRepairsFilter()
         return repairs_widget
@@ -978,7 +980,6 @@ class MainWindow(QMainWindow):
                 self.session = self.Session()
                 self.session.add(new_repair)
                 self.session.commit()
-                # TODO: Убедиться, что я могу ввести некорректный id оборудования и БД это сама отловит
                 self.clearRepairsFilter()
             except Exception as err:
                 QMessageBox.critical(None, 'Error!', str(err))
@@ -988,25 +989,96 @@ class MainWindow(QMainWindow):
             dialog.deleteLater()
 
     def editRepair(self):
-        # TODO: Написать функцию
-        pass
+        items = self.repairs_table.selectedItems()
+        row, res = getRow(items)
+        if (not res) or (row is None):
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            dialog = AddRepairDlg(self)
+            dialog.repair_name.setText(self.repairs_table.item(row, 1).text())
+            dialog.is_planned.setChecked(
+                bool(int(self.repairs_table.item(row, 2).text())))
+            dialog.receipt_date.setText(self.repairs_table.item(row, 3).text())
+            dialog.start_date.setText(self.repairs_table.item(row, 4).text())
+            dialog.finish_date.setText(self.repairs_table.item(row, 5).text())
+            dialog.responsible_id.setText(
+                f'{self.repairs_table.item(row, 6).text()} {self.repairs_table.item(row, 7).text()} {self.repairs_table.item(row, 8).text()}')
+            dialog.equipment_id.setText(
+                f'{self.repairs_table.item(row, 9).text()} {self.repairs_table.item(row, 10).text()} {self.repairs_table.item(row, 11).text()}')
+
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    self.session = self.Session()
+                    editing_repair = self.session.query(Repair).filter_by(
+                        idrepair=self.repairs_table.item(row, 0).text()).first()
+
+                    editing_repair.repair_name = dialog.repair_name.text(
+                    ) if dialog.repair_name.text() != "" else None
+                    editing_repair.is_planned = dialog.is_planned.isChecked()
+                    editing_repair.receipt_date = dialog.receipt_date.text(
+                    ) if dialog.receipt_date.text() != "" else None
+                    editing_repair.start_date = dialog.start_date.text(
+                    ) if dialog.start_date.text() != "" else None
+                    editing_repair.finish_date = dialog.finish_date.text(
+                    ) if dialog.finish_date.text() != "" else None
+                    editing_repair.responsible_id = dialog.responsible_id.text().split(
+                        ' ')[0] if dialog.responsible_id.text() != "" else None
+                    editing_repair.equipment_id = dialog.equipment_id.text().split(
+                        ' ')[0] if dialog.equipment_id.text() != "" else None
+
+                    self.session.commit()
+                    self.clearRepairsFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+                finally:
+                    self.session.close()
 
     def deleteRepair(self):
-        # TODO: Написать функцию
-        pass
+        items = self.repairs_table.selectedItems()
+        row, res = getRow(items)
+        if (not res) or (row is None):
+            QMessageBox.critical(
+                None, 'Warning!', 'Please, select cells in single row')
+            return
+        else:
+            self.session = self.Session()
+
+            deleting_repair = self.session.query(Repair).filter_by(
+                idrepair=self.repairs_table.item(row, 0).text()).first()
+            dialog = YesNoDlg(
+                'Repair deleting', f'Are you really want to delete repair:\n{deleting_repair}?')
+            if dialog.exec_() == QDialog.Accepted:
+                try:
+                    self.session.delete(deleting_repair)
+                    self.session.commit()
+                    self.clearRepairsFilter()
+                except Exception as err:
+                    QMessageBox.critical(None, 'Error!', str(err))
+            self.session.close()
 
     def showRepairsByFilter(self):
-        # TODO: Написать функцию
-        pass
+        col = self.repairsFilterColumn.currentText()
+        cursor = self.connection.cursor()
+        cursor.execute("CALL FILTER_REPAIRS(%s, %s)",
+                       (col, self.repairsFilterValue.text()))
+        data = cursor.fetchall()
+        self.repairs_table = createTableFromMYSQLDB(
+            data, self.repairs_table_headers, self)
+        self.repairs_table.resizeColumnsToContents()
+        self.repairs_grid_layout.addWidget(self.repairs_table, 1, 0)
+        self.repairsFilterValue.setText('')
+        self.repairsFilterColumn.setCurrentIndex(0)
 
     def clearRepairsFilter(self):
         cursor = self.connection.cursor()
         cursor.execute("CALL SHOW_ALL_REPAIRS()")
         data = cursor.fetchall()
-        table = createTableFromMYSQLDB(
+        self.repairs_table = createTableFromMYSQLDB(
             data, self.repairs_table_headers, self)
-        table.resizeColumnsToContents()
-        self.repairs_grid_layout.addWidget(table, 1, 0)
+        self.repairs_table.resizeColumnsToContents()
+        self.repairs_grid_layout.addWidget(self.repairs_table, 1, 0)
         self.repairsFilterValue.setText('')
         self.repairsFilterColumn.setCurrentIndex(0)
 
